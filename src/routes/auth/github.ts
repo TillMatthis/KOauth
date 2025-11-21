@@ -6,6 +6,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { fetchGitHubUserInfo, findOrCreateOAuthUser } from '@/lib/auth/oauth'
 import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
+import { generateAccessToken } from '@/lib/auth/jwt'
 import { z } from 'zod'
 
 /**
@@ -98,17 +99,17 @@ export async function githubCallbackRoute(app: FastifyInstance) {
         return reply.redirect('/?error=token_exchange_failed')
       }
 
-      const tokenData = await tokenResponse.json()
-      const accessToken = tokenData.access_token
+      const tokenData = await tokenResponse.json() as any
+      const githubAccessToken = tokenData.access_token
 
-      if (!accessToken) {
+      if (!githubAccessToken) {
         logger.error({ tokenData }, 'No access token received')
         return reply.redirect('/?error=no_access_token')
       }
 
       // Fetch user information from GitHub
       logger.info('Fetching GitHub user info')
-      const userInfo = await fetchGitHubUserInfo(accessToken)
+      const userInfo = await fetchGitHubUserInfo(githubAccessToken)
 
       // Find or create user
       logger.info({ email: userInfo.email, provider: 'github' }, 'Finding or creating user')
@@ -124,6 +125,14 @@ export async function githubCallbackRoute(app: FastifyInstance) {
       )
 
       logger.info({ userId: user.id, sessionId }, 'GitHub OAuth login successful')
+
+      // Generate JWT access token
+      const jwtAccessToken = generateAccessToken(
+        user.id,
+        user.email,
+        app.config.JWT_SECRET,
+        app.config.JWT_EXPIRES_IN
+      )
 
       // Set HTTP-only cookies
       reply
@@ -142,8 +151,9 @@ export async function githubCallbackRoute(app: FastifyInstance) {
           expires: expiresAt
         })
 
-      // Redirect to home page (success)
-      return reply.redirect('/')
+      // For OAuth flows, we redirect with the token as a query parameter
+      // (Frontend can extract and store it for API calls)
+      return reply.redirect(`/?access_token=${jwtAccessToken}`)
     } catch (error) {
       logger.error({ error }, 'GitHub OAuth callback failed')
       return reply.redirect('/?error=oauth_callback_failed')

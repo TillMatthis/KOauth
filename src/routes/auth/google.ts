@@ -6,6 +6,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { fetchGoogleUserInfo, findOrCreateOAuthUser } from '@/lib/auth/oauth'
 import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
+import { generateAccessToken } from '@/lib/auth/jwt'
 import { z } from 'zod'
 
 /**
@@ -99,17 +100,17 @@ export async function googleCallbackRoute(app: FastifyInstance) {
         return reply.redirect('/?error=token_exchange_failed')
       }
 
-      const tokenData = await tokenResponse.json()
-      const accessToken = tokenData.access_token
+      const tokenData = await tokenResponse.json() as any
+      const googleAccessToken = tokenData.access_token
 
-      if (!accessToken) {
+      if (!googleAccessToken) {
         logger.error('No access token received')
         return reply.redirect('/?error=no_access_token')
       }
 
       // Fetch user information from Google
       logger.info('Fetching Google user info')
-      const userInfo = await fetchGoogleUserInfo(accessToken)
+      const userInfo = await fetchGoogleUserInfo(googleAccessToken)
 
       // Find or create user
       logger.info({ email: userInfo.email, provider: 'google' }, 'Finding or creating user')
@@ -125,6 +126,14 @@ export async function googleCallbackRoute(app: FastifyInstance) {
       )
 
       logger.info({ userId: user.id, sessionId }, 'Google OAuth login successful')
+
+      // Generate JWT access token
+      const jwtToken = generateAccessToken(
+        user.id,
+        user.email,
+        app.config.JWT_SECRET,
+        app.config.JWT_EXPIRES_IN
+      )
 
       // Set HTTP-only cookies
       reply
@@ -143,8 +152,9 @@ export async function googleCallbackRoute(app: FastifyInstance) {
           expires: expiresAt
         })
 
-      // Redirect to home page (success)
-      return reply.redirect('/')
+      // For OAuth flows, we redirect with the token as a query parameter
+      // (Frontend can extract and store it for API calls)
+      return reply.redirect(`/?access_token=${jwtToken}`)
     } catch (error) {
       logger.error({ error }, 'Google OAuth callback failed')
       return reply.redirect('/?error=oauth_callback_failed')
