@@ -1,0 +1,84 @@
+/**
+ * KOauth Main Application
+ * Configures Fastify with all plugins and routes
+ */
+
+import Fastify, { FastifyInstance } from 'fastify'
+import fastifyEnv from '@fastify/env'
+import fastifyHelmet from '@fastify/helmet'
+import fastifyCors from '@fastify/cors'
+import fastifyCookie from '@fastify/cookie'
+import fastifyRateLimit from '@fastify/rate-limit'
+import { envSchema } from '@/config/env'
+import { logger } from '@/lib/logger'
+
+/**
+ * Build and configure the Fastify application
+ * @param opts - Fastify server options
+ * @returns Configured Fastify instance
+ */
+export async function buildApp(opts = {}): Promise<FastifyInstance> {
+  const app = Fastify({
+    logger,
+    requestIdLogLabel: 'reqId',
+    disableRequestLogging: false,
+    requestIdHeader: 'x-request-id',
+    ...opts
+  })
+
+  // Register environment variables with validation
+  await app.register(fastifyEnv, {
+    confKey: 'config',
+    schema: envSchema,
+    dotenv: true
+  })
+
+  // Security plugins
+  await app.register(fastifyHelmet, {
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:']
+      }
+    }
+  })
+
+  await app.register(fastifyCors, {
+    origin: app.config.CORS_ORIGIN,
+    credentials: true
+  })
+
+  await app.register(fastifyCookie, {
+    secret: app.config.SESSION_SECRET,
+    hook: 'onRequest'
+  })
+
+  await app.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+    cache: 10000
+  })
+
+  // Health check endpoint
+  app.get('/health', async () => {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    }
+  })
+
+  // Root endpoint
+  app.get('/', async () => {
+    return {
+      name: 'KOauth',
+      version: '0.1.0',
+      description: 'Reusable self-hosted auth server',
+      status: 'ready'
+    }
+  })
+
+  return app
+}
