@@ -22,6 +22,7 @@ model User {
 
   // Relations
   sessions      Session[]
+  apiKeys       UserApiKey[]
 
   @@map("users")
 }
@@ -45,6 +46,25 @@ model Session {
   @@map("sessions")
 }
 
+// Personal API keys for long-lived authentication (Task 1.3)
+// Used for programmatic access (iOS shortcuts, legacy systems like Kura)
+model UserApiKey {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  name        String    // Friendly name (e.g., "Kura Production", "iOS Shortcuts")
+  prefix      String    @unique // 4-6 char prefix for display (e.g., "koa_abc123")
+  keyHash     String    @map("key_hash") // scrypt hash of the full key
+  expiresAt   DateTime? @map("expires_at") // Optional expiration
+  lastUsedAt  DateTime? @map("last_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([prefix])
+  @@map("user_api_keys")
+}
+
 // Note: Additional models will be added in later tasks:
-// - UserApiKey (Task 1.3)
 // - OAuthProvider (Task 1.4)
