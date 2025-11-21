@@ -22,3 +22,14 @@ export interface Session {
   createdAt: Date
   updatedAt: Date
 }
+
+export interface UserApiKey {
+  id: string
+  userId: string
+  name: string
+  prefix: string
+  keyHash: string
+  expiresAt: Date | null
+  lastUsedAt: Date | null
+  createdAt: Date
+}

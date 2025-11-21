@@ -60,14 +60,43 @@
 ---
 
 #### Task 1.3 – Personal API Keys (Critical for Kura legacy)
-- [ ] user_api_keys table (id, user_id, name, key_hash, expires_at, last_used)
-- [ ] GET/POST/DELETE /api/me/api-keys
-- [ ] Middleware: accept Bearer = valid API key OR valid session
+- [x] user_api_keys table (id, user_id, name, prefix, key_hash, expires_at, last_used)
+- [x] POST /api/me/api-keys (generate new key - return full key ONCE)
+- [x] GET /api/me/api-keys (list all keys without full keys)
+- [x] DELETE /api/me/api-keys/:id (revoke key)
+- [x] Middleware: accept Bearer = valid API key OR valid session
+- [x] Scrypt hashing for API keys (same params as refresh tokens)
+- [x] Rate limiting on API key generation (10 req/min)
+- [x] Maximum 10 API keys per user enforced
+- [x] Comprehensive test suite with 20+ test cases
+- [x] API key format: koa_PREFIX_SECRET (6-char prefix for lookup)
+- [x] lastUsedAt tracking for monitoring
 
-**Status:** Not Started
-**Started:**
-**Completed:**
+**Status:** ✅ Completed
+**Started:** 2025-11-21
+**Completed:** 2025-11-21
 **Notes:**
+- Implemented full API key management system for long-lived authentication
+- API keys work as Bearer tokens alongside existing session cookie auth
+- Format: `koa_PREFIX_SECRET` where PREFIX is 6 chars for fast DB lookup
+- Keys are hashed with scrypt before storage (never stored in plaintext)
+- Full key returned ONLY ONCE on creation - cannot be retrieved later
+- Supports optional expiration (configurable in days, default none)
+- Automatic lastUsedAt timestamp update on each use
+- Middleware checks Bearer token first, then falls back to session cookie
+- Rate limiting: 10 requests/minute per user on API routes
+- Maximum 10 API keys per user (configurable)
+- Test suite: 20+ comprehensive tests covering:
+  - Key creation with/without expiration
+  - Key listing (without exposing full keys)
+  - Key revocation with authorization check
+  - Bearer token authentication (valid, invalid, expired, malformed)
+  - Parallel auth (Bearer takes precedence over cookies)
+  - Rate limiting enforcement
+  - Maximum keys limit
+  - lastUsedAt tracking
+  - Security: Users cannot revoke other users' keys
+- Ready for Kura migration and iOS Shortcuts integration
 
 ---
 
