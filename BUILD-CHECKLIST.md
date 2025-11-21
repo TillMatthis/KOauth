@@ -152,14 +152,59 @@
 ---
 
 #### Task 1.5 – JWT Bearer Strategy (for MCP)
-- [ ] Issue short-lived access JWT on login (15min)
-- [ ] Verify JWT OR API key in middleware
-- [ ] attach request.user = { id, email }
+- [x] Issue short-lived access JWT on login (15min)
+- [x] Verify JWT OR API key in middleware
+- [x] attach request.user = { id, email }
+- [x] JWT_SECRET loaded from .env with validation
+- [x] POST /auth/token endpoint for token exchange (no session cookies)
+- [x] POST /auth/login now returns access_token, token_type, expires_in
+- [x] GET /auth/google/callback redirects with JWT in query param
+- [x] GET /auth/github/callback redirects with JWT in query param
+- [x] GET /api/me endpoint protected by all three auth methods
+- [x] Helper functions: protectRoute(), getUser(req)
+- [x] Comprehensive test suite with 16 test cases
 
-**Status:** Not Started
-**Started:**
-**Completed:**
+**Status:** ✅ Completed
+**Started:** 2025-11-21
+**Completed:** 2025-11-21
 **Notes:**
+- Implemented complete JWT Bearer token authentication for Claude Desktop MCP integration
+- JWT access tokens are short-lived (15 minutes by default, configurable via JWT_EXPIRES_IN)
+- JWT format: HS256 algorithm, payload includes { sub: userId, email, iat, exp }
+- Token response follows OAuth 2.0 standard: { access_token, token_type: "bearer", expires_in: 900 }
+- Enhanced authentication middleware with three-tier fallback:
+  1. Bearer token → tries JWT first, then API key
+  2. Session cookie → traditional session-based auth
+  3. If no valid auth found → 401 Unauthorized
+- New endpoints:
+  - POST /auth/token: Token exchange endpoint (email/password → JWT, no cookies)
+  - GET /api/me: Returns current user { id, email }, works with all three auth methods
+- Updated existing endpoints to issue JWTs:
+  - POST /auth/login: Now returns JWT access token + sets session cookies
+  - OAuth callbacks (Google/GitHub): Redirect with access_token in query param
+- Helper functions added to middleware.ts:
+  - protectRoute(): Returns authenticate middleware for route protection
+  - getUser(req): Alias for requireUser, extracts authenticated user from request
+- JWT utilities (lib/auth/jwt.ts):
+  - generateAccessToken(): Creates signed JWT with configurable expiration
+  - verifyAccessToken(): Validates JWT signature and expiration
+  - parseExpiresIn(): Converts time strings (15m, 1h, 7d) to seconds
+  - createTokenResponse(): Formats OAuth 2.0 standard token response
+- Test suite: 16 comprehensive tests covering:
+  - Login flow → JWT issuance → Bearer auth → success (✅)
+  - JWT signature verification (valid, tampered, wrong secret) (✅)
+  - Token exchange endpoint (success, no cookies, invalid credentials) (✅)
+  - /api/me authentication (JWT, expired, tampered, malformed, missing) (✅)
+  - Dual auth: JWT vs session vs API key (all three work independently) (✅)
+  - Bearer token priority over session cookies (✅)
+  - JWT expiration time validation (15 minutes = 900 seconds) (✅)
+- Security features:
+  - JWT tokens signed with HS256 and JWT_SECRET from environment
+  - Short 15-minute expiration minimizes exposure if token is compromised
+  - Signature verification prevents tampering
+  - Expired tokens automatically rejected by middleware
+  - Bearer tokens take precedence over cookies (prevents session fixation attacks)
+- Ready for Claude Desktop MCP integration - MCP can use POST /auth/token to get JWT, then use Bearer header for all API calls
 
 ---
 

@@ -6,6 +6,7 @@
 import type { FastifyInstance } from 'fastify'
 import { signupRoute } from './signup'
 import { loginRoute } from './login'
+import { tokenRoute } from './token'
 import { refreshRoute } from './refresh'
 import { logoutRoute } from './logout'
 import { googleAuthRoute, googleCallbackRoute } from './google'
@@ -18,6 +19,7 @@ import { githubAuthRoute, githubCallbackRoute } from './github'
 export async function registerAuthRoutes(app: FastifyInstance) {
   await signupRoute(app)
   await loginRoute(app)
+  await tokenRoute(app) // JWT token exchange endpoint (Task 1.5)
   await refreshRoute(app)
   await logoutRoute(app)
 

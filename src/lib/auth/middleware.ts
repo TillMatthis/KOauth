@@ -1,11 +1,12 @@
 /**
  * Authentication middleware
- * Supports both session cookies and Bearer token (API keys)
+ * Supports session cookies, API keys, and JWT Bearer tokens
  */
 
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { validateSession } from './session'
 import { validateApiKey } from './apikey'
+import { verifyAccessToken } from './jwt'
 
 /**
  * Extend FastifyRequest to include user property
@@ -21,10 +22,10 @@ declare module 'fastify' {
 }
 
 /**
- * Authenticate request using either session cookie or Bearer token
- * This middleware checks both authentication methods in parallel:
- * 1. Session cookie (session_id)
- * 2. Bearer token (Authorization header with API key)
+ * Authenticate request using session cookie, API key, or JWT Bearer token
+ * This middleware checks authentication methods in order:
+ * 1. Bearer token (Authorization header) - tries JWT first, then API key
+ * 2. Session cookie (session_id)
  */
 export async function authenticate(
   request: FastifyRequest,
@@ -35,17 +36,30 @@ export async function authenticate(
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
-    // Validate API key
+    // Try to verify as JWT access token first
+    const jwtSecret = (request.server as any).config.JWT_SECRET
+    if (jwtSecret) {
+      const jwtPayload = verifyAccessToken(token, jwtSecret)
+      if (jwtPayload) {
+        request.user = {
+          id: jwtPayload.sub,
+          email: jwtPayload.email
+        }
+        return
+      }
+    }
+
+    // If not a valid JWT, try to validate as API key
     const user = await validateApiKey(token)
     if (user) {
       request.user = user
       return
     }
-    // If Bearer token is present but invalid, reject immediately
-    // (don't fall through to session auth)
+
+    // If Bearer token is present but neither JWT nor API key is valid, reject
     return reply.status(401).send({
       success: false,
-      error: 'Invalid API key'
+      error: 'Invalid or expired token'
     })
   }
 
@@ -81,6 +95,21 @@ export async function optionalAuthenticate(
   const authHeader = request.headers.authorization
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7)
+
+    // Try JWT first
+    const jwtSecret = (request.server as any).config.JWT_SECRET
+    if (jwtSecret) {
+      const jwtPayload = verifyAccessToken(token, jwtSecret)
+      if (jwtPayload) {
+        request.user = {
+          id: jwtPayload.sub,
+          email: jwtPayload.email
+        }
+        return
+      }
+    }
+
+    // Try API key
     const user = await validateApiKey(token)
     if (user) {
       request.user = user
@@ -108,6 +137,7 @@ export async function optionalAuthenticate(
 /**
  * Helper to get the authenticated user or throw
  * Use this in route handlers to ensure user is authenticated
+ * Alias: getUser
  */
 export function requireUser(request: FastifyRequest): {
   id: string
@@ -118,4 +148,18 @@ export function requireUser(request: FastifyRequest): {
     throw new Error('User not authenticated')
   }
   return request.user
+}
+
+/**
+ * Alias for requireUser - get authenticated user or throw
+ */
+export const getUser = requireUser
+
+/**
+ * Create a route protection middleware (preHandler)
+ * Use this as a preHandler option in route definitions
+ * Example: app.get('/protected', { preHandler: protectRoute() }, handler)
+ */
+export function protectRoute() {
+  return authenticate
 }
