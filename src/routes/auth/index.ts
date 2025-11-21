@@ -8,6 +8,8 @@ import { signupRoute } from './signup'
 import { loginRoute } from './login'
 import { refreshRoute } from './refresh'
 import { logoutRoute } from './logout'
+import { googleAuthRoute, googleCallbackRoute } from './google'
+import { githubAuthRoute, githubCallbackRoute } from './github'
 
 /**
  * Register all auth routes
@@ -18,4 +20,10 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   await loginRoute(app)
   await refreshRoute(app)
   await logoutRoute(app)
+
+  // OAuth routes (Task 1.4)
+  await googleAuthRoute(app)
+  await googleCallbackRoute(app)
+  await githubAuthRoute(app)
+  await githubCallbackRoute(app)
 }
