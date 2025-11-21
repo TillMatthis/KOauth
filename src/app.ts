@@ -80,5 +80,24 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     }
   })
 
+  // Register auth routes with stricter rate limiting
+  await app.register(async (authScope) => {
+    // Stricter rate limit for auth endpoints
+    await authScope.register(fastifyRateLimit, {
+      max: 5,
+      timeWindow: '15 minutes',
+      cache: 10000,
+      errorResponseBuilder: () => ({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.'
+      })
+    })
+
+    // Import and register auth routes
+    const { registerAuthRoutes } = await import('@/routes/auth')
+    await registerAuthRoutes(authScope)
+  })
+
   return app
 }
