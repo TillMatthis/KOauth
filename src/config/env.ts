@@ -57,6 +57,10 @@ export const envSchema = {
       type: 'string',
       default: ''
     },
+    GOOGLE_REDIRECT_URI: {
+      type: 'string',
+      default: 'http://localhost:3000/auth/google/callback'
+    },
     GITHUB_CLIENT_ID: {
       type: 'string',
       default: ''
@@ -64,6 +68,10 @@ export const envSchema = {
     GITHUB_CLIENT_SECRET: {
       type: 'string',
       default: ''
+    },
+    GITHUB_REDIRECT_URI: {
+      type: 'string',
+      default: 'http://localhost:3000/auth/github/callback'
     },
 
     // Email (optional for now)
@@ -98,8 +106,10 @@ declare module 'fastify' {
       REFRESH_TOKEN_EXPIRES_IN: string
       GOOGLE_CLIENT_ID: string
       GOOGLE_CLIENT_SECRET: string
+      GOOGLE_REDIRECT_URI: string
       GITHUB_CLIENT_ID: string
       GITHUB_CLIENT_SECRET: string
+      GITHUB_REDIRECT_URI: string
       EMAIL_FROM: string
       RESEND_API_KEY: string
       CORS_ORIGIN: string

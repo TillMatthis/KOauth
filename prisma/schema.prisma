@@ -17,6 +17,11 @@ model User {
   email         String    @unique
   passwordHash  String    @map("password_hash")
   emailVerified Boolean   @default(false) @map("email_verified")
+
+  // OAuth fields (Task 1.4)
+  provider      String?   // "google" | "github" | null (null = email/password)
+  providerId    String?   @map("provider_id") // Unique ID from OAuth provider
+
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -24,6 +29,7 @@ model User {
   sessions      Session[]
   apiKeys       UserApiKey[]
 
+  @@unique([provider, providerId]) // Ensure unique provider+providerId combination
   @@map("users")
 }
 
@@ -66,5 +72,4 @@ model UserApiKey {
   @@map("user_api_keys")
 }
 
-// Note: Additional models will be added in later tasks:
-// - OAuthProvider (Task 1.4)
+// Note: OAuth integration completed in Task 1.4 (provider + providerId fields added to User model)

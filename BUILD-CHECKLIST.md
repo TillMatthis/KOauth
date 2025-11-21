@@ -101,14 +101,53 @@
 ---
 
 #### Task 1.4 – Social Logins (Google + GitHub)
-- [ ] OAuth2 callbacks for both
-- [ ] Upsert user on first login
-- [ ] Configurable client IDs/secrets per provider
+- [x] OAuth2 callbacks for both (Google + GitHub)
+- [x] Upsert user on first login
+- [x] Configurable client IDs/secrets per provider
+- [x] Database schema: provider + providerId fields on User model
+- [x] GET /auth/google → redirect to Google OAuth consent
+- [x] GET /auth/google/callback → exchange code, create/login user, set session
+- [x] GET /auth/github → redirect to GitHub OAuth authorization
+- [x] GET /auth/github/callback → exchange code, create/login user, set session
+- [x] Account linking: OAuth login with existing email merges accounts
+- [x] Security: Random password hash for OAuth users (prevents email/password login)
+- [x] Email verification: OAuth users auto-verified (emailVerified = true)
+- [x] Rate limiting: Callbacks protected by 5 req/15min auth endpoint limit
+- [x] Error handling: All OAuth errors redirect to /?error=error_code
+- [x] Comprehensive test suite: 17 test cases covering both providers
 
-**Status:** Not Started
-**Started:**
-**Completed:**
+**Status:** ✅ Completed
+**Started:** 2025-11-21
+**Completed:** 2025-11-21
 **Notes:**
+- Implemented complete OAuth 2.0 flow for Google and GitHub authentication
+- Database changes: Added nullable `provider` and `provider_id` columns to User model
+- Prisma migration: Created with unique constraint on (provider, provider_id)
+- Pure fetch implementation (no heavy OAuth libraries) for clean, maintainable code
+- Account linking: If user signs up with email/password then logs in with Google (same email), accounts are merged
+- Security features:
+  - OAuth users get random 32-byte password hash → email/password login impossible
+  - All OAuth users automatically email verified
+  - Rate limiting inherited from auth route scope (5 requests/15 minutes)
+  - Secure cookie-based sessions (same as email/password auth)
+- Error handling: All errors redirect to homepage with query param (e.g., /?error=oauth_not_configured)
+- Routes implemented:
+  - GET /auth/google → builds OAuth URL, redirects to Google consent screen
+  - GET /auth/google/callback → validates code, exchanges for token, fetches user info, upserts user, creates session
+  - GET /auth/github → builds OAuth URL, redirects to GitHub authorization
+  - GET /auth/github/callback → validates code, exchanges for token, fetches user info (profile + emails), upserts user, creates session
+- Helper module (lib/auth/oauth.ts):
+  - findOrCreateOAuthUser: Smart upsert logic with account linking
+  - fetchGoogleUserInfo: Fetches from google.com/oauth2/v2/userinfo
+  - fetchGitHubUserInfo: Fetches from api.github.com/user + /user/emails
+- Test suite: 17 comprehensive tests
+  - Google OAuth: 6 tests (redirect, callback success, existing user, account linking, errors)
+  - GitHub OAuth: 6 tests (redirect, callback success, existing user, account linking, errors)
+  - Configuration tests: Missing client ID/secret handling
+  - Rate limiting: OAuth callback rate limit enforcement
+  - All external API calls mocked with Vitest for reliable testing
+- Environment variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_REDIRECT_URI
+- Ready for production use with any Google Cloud or GitHub OAuth app
 
 ---
 
