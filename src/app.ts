@@ -122,5 +122,9 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     await registerMeRoutes(apiScope)
   }, { prefix: '/api/me' })
 
+  // Register static UI plugin (after auth routes so API routes take precedence)
+  const staticUI = await import('@/plugins/static-ui')
+  await app.register(staticUI.default)
+
   return app
 }
