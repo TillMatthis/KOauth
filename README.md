@@ -80,6 +80,60 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
    - App: `http://localhost:3000`
    - Adminer (DB UI): `http://localhost:8080`
 
+## Using the Client SDK
+
+Get authentication in **5 lines of code** with `@tillmatthis/koauth-client`:
+
+### Fastify
+
+```typescript
+import Fastify from 'fastify'
+import { initKOauth, protectRoute, getUser } from '@tillmatthis/koauth-client'
+
+const app = Fastify()
+
+// 1. Initialize KOauth
+initKOauth(app, { baseUrl: 'http://localhost:3000' })
+
+// 2. Protect routes (1 line!)
+app.get('/api/me', {
+  preHandler: protectRoute()
+}, async (request) => {
+  const user = getUser(request)
+  return { user }
+})
+
+await app.listen({ port: 4000 })
+```
+
+### Express
+
+```typescript
+import express from 'express'
+import { initKOauth, protectRoute, getUser } from '@tillmatthis/koauth-client'
+
+const app = express()
+
+// 1. Initialize KOauth
+initKOauth(app, { baseUrl: 'http://localhost:3000' })
+
+// 2. Protect routes (1 line!)
+app.get('/api/me', protectRoute(), (req, res) => {
+  const user = getUser(req)
+  res.json({ user })
+})
+
+app.listen(4000)
+```
+
+**The SDK automatically handles:**
+- ✅ Session cookies
+- ✅ Bearer API keys
+- ✅ Bearer JWT tokens
+- ✅ Cookie forwarding for server-side requests
+
+See full SDK documentation: [`packages/koauth-client/README.md`](./packages/koauth-client/README.md)
+
 ## Project Structure
 
 ```

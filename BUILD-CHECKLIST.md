@@ -208,15 +208,71 @@
 
 ---
 
-#### Task 1.6 – Client SDK
-- [ ] Publish @tillmatthis/koauth-client (private repo for now)
-- [ ] initKOauth(fastify, { baseUrl })
-- [ ] protectRoute(), getUser(req), requireUser(req)
+#### Task 1.6 – Reusable Client SDK (@tillmatthis/koauth-client)
+- [x] Created packages/koauth-client monorepo package
+- [x] Zero-dependency TypeScript implementation (uses native fetch)
+- [x] initKOauth(app, { baseUrl }) - works with both Fastify and Express
+- [x] protectRoute() - middleware that requires authentication
+- [x] optionalAuth() - middleware for optional authentication
+- [x] getUser(req) - get authenticated user or throw
+- [x] optionalUser(req) - get user or return null
+- [x] Automatic multi-auth support (sessions, Bearer API keys, Bearer JWT)
+- [x] Cookie forwarding for server-side requests
+- [x] Full TypeScript types and JSDoc documentation
+- [x] Comprehensive test suite (Fastify + Express, 14 tests passing)
+- [x] Beautiful README with examples
+- [x] Publish-ready package.json with proper exports
+- [x] Updated root README with SDK usage examples
 
-**Status:** Not Started
-**Started:**
-**Completed:**
+**Status:** ✅ Completed
+**Started:** 2025-11-21
+**Completed:** 2025-11-21
 **Notes:**
+- Created `packages/koauth-client` as a monorepo package within the KOauth repository
+- Zero dependencies - uses Node.js native fetch API for HTTP requests
+- Framework agnostic - automatically detects and works with both Fastify and Express
+- Authentication methods supported (all automatic):
+  1. Session cookies (session_id) - forwarded in requests
+  2. Bearer API keys (Authorization: Bearer koa_...) - passed through
+  3. Bearer JWT tokens (Authorization: Bearer eyJ...) - passed through
+- Core API surface:
+  - initKOauth(app, options) - initializes SDK with auth server URL
+  - protectRoute() - returns middleware that requires authentication (401 if not authenticated)
+  - optionalAuth() - returns middleware that attaches user if authenticated, continues without if not
+  - getUser(request) - extracts user from request or throws error
+  - optionalUser(request) - extracts user from request or returns null
+- Implementation details:
+  - Validates auth by calling KOauth server's /api/me endpoint
+  - Automatically forwards Authorization headers and session cookies
+  - Uses 5-second timeout by default (configurable)
+  - Handles both parsed cookies (from @fastify/cookie) and raw Cookie headers
+- TypeScript features:
+  - Full type definitions with module augmentation for Fastify/Express
+  - JSDoc comments on all public APIs
+  - Proper package.json exports for ESM and CommonJS
+  - tsup build with .d.ts generation
+- Testing:
+  - Mock auth server on ports 3098/3099 for isolated testing
+  - 14 comprehensive tests covering both frameworks
+  - Tests for protected routes, optional auth, Bearer tokens, session cookies
+  - All tests passing ✅
+- Package configuration:
+  - Scoped package name: @tillmatthis/koauth-client
+  - Version: 0.1.0
+  - Exports: CJS, ESM, and TypeScript declarations
+  - Peer dependencies: fastify ^4.0.0 || ^5.0.0, express ^4.0.0 || ^5.0.0 (both optional)
+  - Engines: Node.js >= 18.0.0
+  - Ready for npm publish (currently private)
+- Documentation:
+  - Complete README with quick start guides for both Fastify and Express
+  - API reference with examples
+  - Authentication methods documentation
+  - Complete example application
+- Integration with root README:
+  - Added "Using the Client SDK" section with examples
+  - Links to package README for full documentation
+- Ready for immediate use - can be installed with `npm install ./packages/koauth-client`
+- Makes every future project get auth in 5 lines forever! 🎯
 
 ---
 
