@@ -4,7 +4,7 @@
 
 KOauth is a modern, TypeScript-native authentication server built on Fastify that provides drop-in auth for any Node.js application. No vendor lock-in, no Java bloat, just clean, secure authentication you own completely.
 
-## Features (MVP)
+## Features (MVP - Phase 1 Complete!)
 
 - ✅ Email + Password authentication with Argon2id hashing
 - ✅ Session management with HTTP-only secure cookies
@@ -12,10 +12,10 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
 - ✅ Google + GitHub social login (OAuth2)
 - ✅ JWT bearer tokens (compatible with Claude Desktop MCP)
 - ✅ Dual authentication middleware (session OR API key)
-- ✅ Email verification + password reset via magic links
-- ✅ Built-in login UI (/auth) – beautiful and mobile-ready
+- ✅ **Built-in Auth UI** – Stunning React login/signup at `/auth` (mobile-ready, dark mode)
 - ✅ Reusable client SDK: `@tillmatthis/koauth-client`
 - ✅ Docker + docker-compose ready
+- 🚧 Email verification + password reset via magic links (Phase 2)
 
 ## Quick Start
 
@@ -64,6 +64,19 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
    ```
 
    Server will start at `http://localhost:3000`
+
+7. **Access the Auth UI**
+   ```bash
+   # Open in your browser
+   http://localhost:3000/auth
+   ```
+
+   The built-in auth UI provides:
+   - 🎨 Beautiful, responsive design with dark mode
+   - 📱 Mobile-optimized login and signup forms
+   - 🔐 Social login buttons (Google + GitHub)
+   - ✨ Smooth animations and modern UX
+   - 🎯 Zero configuration needed!
 
 ### Docker Deployment
 
@@ -134,6 +147,42 @@ app.listen(4000)
 
 See full SDK documentation: [`packages/koauth-client/README.md`](./packages/koauth-client/README.md)
 
+## Using the Auth UI
+
+KOauth includes a beautiful, production-ready authentication UI that works out of the box:
+
+### Available Routes
+
+- **`/auth`** - Login page with email/password and social login
+- **`/auth/signup`** - User registration with password validation
+- **`/auth/forgot`** - Password reset (Phase 2 preview)
+
+### Features
+
+- ✨ **Zero Configuration** - Just visit `/auth` and you're done
+- 🎨 **Beautiful Design** - Modern UI inspired by Clerk and Auth0
+- 🌓 **Dark Mode** - Automatic theme detection with manual toggle
+- 📱 **Fully Responsive** - Works perfectly on mobile, tablet, and desktop
+- 🔐 **Social Login** - Integrated Google and GitHub OAuth buttons
+- ⚡ **Fast** - Built with React + Vite, optimized production builds
+- 🎯 **Smart Redirects** - Supports `?redirect=/dashboard` after login
+- 🚨 **Error Handling** - Beautiful error messages from query params
+
+### Development
+
+The Auth UI is automatically served in production. For development:
+
+```bash
+# Terminal 1: Start the auth server
+npm run dev
+
+# Terminal 2: Start the Vite dev server (optional, for UI development)
+cd client
+npm run dev
+```
+
+In production, the UI is built and served as static files from `/auth`.
+
 ## Project Structure
 
 ```
@@ -146,8 +195,15 @@ koauth/
 │   ├── lib/
 │   │   ├── logger.ts       # Winston logger
 │   │   └── prisma.ts       # Prisma client
-│   ├── plugins/            # Fastify plugins
+│   ├── plugins/
+│   │   └── static-ui.ts    # Serves built React client
 │   └── routes/             # API routes
+├── client/                 # React + Vite auth UI
+│   ├── src/
+│   │   ├── pages/          # Login, Signup, ForgotPassword
+│   │   ├── components/     # Reusable UI components
+│   │   └── App.tsx         # Main app with routing
+│   └── vite.config.ts      # Vite config (outputs to server/dist/client)
 ├── prisma/
 │   └── schema.prisma       # Database schema
 ├── Dockerfile              # Production Docker image
@@ -158,7 +214,9 @@ koauth/
 ## Scripts
 
 - `npm run dev` - Start development server with hot reload
-- `npm run build` - Build TypeScript to JavaScript
+- `npm run build` - Build server and client for production
+- `npm run build:server` - Build TypeScript server
+- `npm run build:client` - Build React client
 - `npm start` - Start production server
 - `npm test` - Run tests with Vitest
 - `npm run lint` - Lint with ESLint
@@ -171,6 +229,7 @@ koauth/
 
 - **Framework**: Fastify 4
 - **Language**: TypeScript 5
+- **Frontend**: React 18 + Vite + Tailwind CSS
 - **Database**: Prisma + PostgreSQL (prod) / SQLite (dev)
 - **Authentication**: Argon2id, JWT, OAuth2
 - **Logging**: Winston
@@ -181,14 +240,14 @@ koauth/
 
 See [BUILD-CHECKLIST.md](./BUILD-CHECKLIST.md) for the complete development roadmap.
 
-### Phase 1 – Core Auth Server (Week 1)
+### Phase 1 – Core Auth Server ✅ COMPLETE!
 - [x] Task 1.1 – Project Foundation
-- [ ] Task 1.2 – Email/Password Auth
-- [ ] Task 1.3 – Personal API Keys
-- [ ] Task 1.4 – Social Logins (Google + GitHub)
-- [ ] Task 1.5 – JWT Bearer Strategy (for MCP)
-- [ ] Task 1.6 – Client SDK
-- [ ] Task 1.7 – Built-in Auth UI
+- [x] Task 1.2 – Email/Password Auth
+- [x] Task 1.3 – Personal API Keys
+- [x] Task 1.4 – Social Logins (Google + GitHub)
+- [x] Task 1.5 – JWT Bearer Strategy (for MCP)
+- [x] Task 1.6 – Client SDK
+- [x] Task 1.7 – Built-in Auth UI
 
 ### Phase 2 – Polish & Admin (Week 2)
 - [ ] Admin Dashboard
