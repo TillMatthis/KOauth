@@ -5,9 +5,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
-import { buildApp } from '@/app'
+import { buildApp } from '../app'
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../lib/prisma'
 
 describe('API Keys', () => {
   let app: FastifyInstance
@@ -342,7 +342,7 @@ describe('API Keys', () => {
     it('should reject expired API key', async () => {
       // Create an expired key manually
       const { prefix, keyHash } = await (async () => {
-        const { createApiKey } = await import('@/lib/auth/apikey')
+        const { createApiKey } = await import('../lib/auth/apikey')
         const result = await createApiKey(userId, 'Expired Key', 0)
 
         // Manually set expiration to past

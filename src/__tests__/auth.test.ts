@@ -5,9 +5,9 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
-import { buildApp } from '@/app'
+import { buildApp } from '../app'
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../lib/prisma'
 
 describe('Authentication API', () => {
   let app: FastifyInstance

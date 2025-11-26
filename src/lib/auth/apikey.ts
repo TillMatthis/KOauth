@@ -5,8 +5,8 @@
 
 import { randomBytes } from 'crypto'
 import { hashToken, verifyToken } from './tokens'
-import { prisma } from '@/lib/prisma'
-import type { UserApiKey } from '@/types/prisma'
+import { prisma } from '../prisma'
+import type { UserApiKey } from '../../types/prisma'
 
 // API key configuration
 const PREFIX_LENGTH = 6 // Length of the visible prefix

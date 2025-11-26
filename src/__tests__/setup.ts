@@ -4,7 +4,7 @@
  */
 
 import { beforeAll, afterAll, beforeEach } from 'vitest'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../lib/prisma'
 
 // Set test environment
 process.env.NODE_ENV = 'test'

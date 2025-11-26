@@ -4,7 +4,7 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import { logger } from '@/lib/logger'
+import { logger } from './logger'
 
 const prismaLogger = logger.child({ context: 'prisma' })
 

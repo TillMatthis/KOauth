@@ -4,8 +4,8 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { refreshSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
-import { UnauthorizedError } from '@/lib/auth/errors'
+import { refreshSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
+import { UnauthorizedError } from '../../lib/auth/errors'
 
 interface RefreshBody {
   refreshToken?: string
