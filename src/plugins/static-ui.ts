@@ -19,7 +19,7 @@ const staticUIPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     await app.register(fastifyStatic, {
       root: clientPath,
       prefix: '/auth',
-      decorateReply: false,
+      decorateReply: true,
     })
 
     // Catch-all route for client-side routing
