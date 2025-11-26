@@ -45,7 +45,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
