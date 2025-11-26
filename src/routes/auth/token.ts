@@ -12,15 +12,13 @@ import { UnauthorizedError, ValidationError } from '@/lib/auth/errors'
 import { generateAccessToken, createTokenResponse } from '@/lib/auth/jwt'
 import { z } from 'zod'
 
-interface TokenRequest extends FastifyRequest {
-  body: {
-    email: string
-    password: string
-  }
+interface TokenBody {
+  email: string
+  password: string
 }
 
 export async function tokenRoute(app: FastifyInstance) {
-  app.post('/auth/token', async (request: TokenRequest, reply: FastifyReply) => {
+  app.post('/auth/token', async (request: FastifyRequest<{ Body: TokenBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'token' })
 
     try {

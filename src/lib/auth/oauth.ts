@@ -17,6 +17,39 @@ export interface OAuthUserInfo {
 }
 
 /**
+ * Google OAuth API response types
+ */
+interface GoogleUserInfoResponse {
+  id: string
+  email: string
+  verified_email: boolean
+  name?: string
+  given_name?: string
+  family_name?: string
+  picture?: string
+  locale?: string
+}
+
+/**
+ * GitHub OAuth API response types
+ */
+interface GitHubUserProfileResponse {
+  id: number
+  login: string
+  name?: string
+  email?: string
+  avatar_url?: string
+  [key: string]: any
+}
+
+interface GitHubUserEmailResponse {
+  email: string
+  primary: boolean
+  verified: boolean
+  visibility?: string
+}
+
+/**
  * Generate a secure random password hash for OAuth users
  * OAuth users don't have real passwords, but we need to store something in passwordHash
  */
@@ -98,7 +131,7 @@ export async function fetchGoogleUserInfo(
     throw new Error(`Failed to fetch Google user info: ${response.statusText}`)
   }
 
-  const data = await response.json()
+  const data = await response.json() as GoogleUserInfoResponse
 
   return {
     provider: 'google',
@@ -129,7 +162,7 @@ export async function fetchGitHubUserInfo(
     throw new Error(`Failed to fetch GitHub user info: ${profileResponse.statusText}`)
   }
 
-  const profile = await profileResponse.json()
+  const profile = await profileResponse.json() as GitHubUserProfileResponse
 
   // Fetch primary email
   const emailsResponse = await fetch('https://api.github.com/user/emails', {
@@ -144,8 +177,12 @@ export async function fetchGitHubUserInfo(
     throw new Error(`Failed to fetch GitHub user emails: ${emailsResponse.statusText}`)
   }
 
-  const emails = await emailsResponse.json()
-  const primaryEmail = emails.find((e: any) => e.primary) || emails[0]
+  const emails = await emailsResponse.json() as GitHubUserEmailResponse[]
+  const primaryEmail = emails.find((e) => e.primary) || emails[0]
+
+  if (!primaryEmail) {
+    throw new Error('No email found for GitHub user')
+  }
 
   return {
     provider: 'github',

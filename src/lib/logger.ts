@@ -67,30 +67,35 @@ export const logger = winston.createLogger({
 
 /**
  * Fastify logger adapter
- * Converts Fastify's Pino-style logs to Winston format
+ * Implements FastifyBaseLogger interface using Winston
  */
 export const fastifyLogger = {
   level: logLevel,
-  serializers: {
-    req(request: any) {
-      return {
-        method: request.method,
-        url: request.url,
-        headers: request.headers,
-        hostname: request.hostname,
-        remoteAddress: request.ip,
-        remotePort: request.socket?.remotePort
-      }
-    },
-    res(response: any) {
-      return {
-        statusCode: response.statusCode
-      }
-    }
-  },
-  stream: {
-    write: (message: string) => {
-      logger.info(message.trim())
+
+  // Core logging methods
+  info: (msg: string, ...args: any[]) => logger.info(msg, ...args),
+  warn: (msg: string, ...args: any[]) => logger.warn(msg, ...args),
+  error: (msg: string, ...args: any[]) => logger.error(msg, ...args),
+  debug: (msg: string, ...args: any[]) => logger.debug(msg, ...args),
+  trace: (msg: string, ...args: any[]) => logger.debug(msg, ...args), // Winston doesn't have trace, map to debug
+  fatal: (msg: string, ...args: any[]) => logger.error(msg, ...args), // Winston doesn't have fatal, map to error
+
+  // Silent method (no-op)
+  silent: () => {},
+
+  // Child logger creation
+  child: (bindings: Record<string, any>) => {
+    const childLogger = logger.child(bindings)
+    return {
+      level: logLevel,
+      info: (msg: string, ...args: any[]) => childLogger.info(msg, ...args),
+      warn: (msg: string, ...args: any[]) => childLogger.warn(msg, ...args),
+      error: (msg: string, ...args: any[]) => childLogger.error(msg, ...args),
+      debug: (msg: string, ...args: any[]) => childLogger.debug(msg, ...args),
+      trace: (msg: string, ...args: any[]) => childLogger.debug(msg, ...args),
+      fatal: (msg: string, ...args: any[]) => childLogger.error(msg, ...args),
+      silent: () => {},
+      child: (childBindings: Record<string, any>) => fastifyLogger.child({ ...bindings, ...childBindings })
     }
   }
 }

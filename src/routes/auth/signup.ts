@@ -11,15 +11,13 @@ import { signupSchema } from '@/lib/auth/validation'
 import { ConflictError, ValidationError } from '@/lib/auth/errors'
 import { z } from 'zod'
 
-interface SignupRequest extends FastifyRequest {
-  body: {
-    email: string
-    password: string
-  }
+interface SignupBody {
+  email: string
+  password: string
 }
 
 export async function signupRoute(app: FastifyInstance) {
-  app.post('/auth/signup', async (request: SignupRequest, reply: FastifyReply) => {
+  app.post('/auth/signup', async (request: FastifyRequest<{ Body: SignupBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'signup' })
 
     try {

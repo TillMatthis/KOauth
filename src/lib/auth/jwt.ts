@@ -3,7 +3,7 @@
  * Uses jsonwebtoken for signing and verifying JWTs
  */
 
-import jwt from 'jsonwebtoken'
+import jwt, { SignOptions } from 'jsonwebtoken'
 
 /**
  * JWT payload structure
@@ -27,7 +27,7 @@ export function generateAccessToken(
   userId: string,
   email: string,
   jwtSecret: string,
-  expiresIn: string = '15m'
+  expiresIn: string | number = '15m'
 ): string {
   const payload: JwtPayload = {
     sub: userId,
@@ -35,9 +35,9 @@ export function generateAccessToken(
   }
 
   return jwt.sign(payload, jwtSecret, {
-    expiresIn: expiresIn as string | number,
+    expiresIn: expiresIn as any,
     algorithm: 'HS256'
-  })
+  } as SignOptions)
 }
 
 /**

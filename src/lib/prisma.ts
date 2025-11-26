@@ -29,7 +29,7 @@ declare global {
 export const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 // Attach Winston logger to Prisma events
-prisma.$on('query', (e) => {
+prisma.$on('query', (e: { query: string; params: string; duration: number }) => {
   prismaLogger.debug({
     msg: 'Query executed',
     query: e.query,
@@ -38,7 +38,7 @@ prisma.$on('query', (e) => {
   })
 })
 
-prisma.$on('error', (e) => {
+prisma.$on('error', (e: { message: string; target: string }) => {
   prismaLogger.error({
     msg: 'Prisma error',
     target: e.target,
@@ -46,7 +46,7 @@ prisma.$on('error', (e) => {
   })
 })
 
-prisma.$on('warn', (e) => {
+prisma.$on('warn', (e: { message: string }) => {
   prismaLogger.warn({
     msg: 'Prisma warning',
     message: e.message
