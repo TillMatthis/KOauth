@@ -24,9 +24,10 @@ const staticUIPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 
     // Catch-all route for client-side routing
     // This ensures that /auth/signup, /auth/forgot etc. all serve index.html
+    // BUT we need to exclude /auth/assets/* to allow static files to be served
     app.setNotFoundHandler((_request, reply) => {
-      // Only handle /auth/* routes
-      if (_request.url.startsWith('/auth')) {
+      // Only handle /auth/* routes, but NOT /auth/assets/*
+      if (_request.url.startsWith('/auth') && !_request.url.startsWith('/auth/assets')) {
         reply.sendFile('index.html')
       } else {
         reply.code(404).send({

@@ -39,7 +39,9 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
+        // Allow 'unsafe-inline' for scripts to support Vite's module system
+        // In production, Vite generates ES modules that may use inline scripts
+        scriptSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", 'data:', 'https:']
       }
     }
