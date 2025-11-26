@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { build } from '@/app'
+import { build } from '../app'
 import type { FastifyInstance } from 'fastify'
 import jwt from 'jsonwebtoken'
 

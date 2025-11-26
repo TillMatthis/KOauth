@@ -4,7 +4,7 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { deleteSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
+import { deleteSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
 
 export async function logoutRoute(app: FastifyInstance) {
   app.post('/auth/logout', async (request: FastifyRequest, reply: FastifyReply) => {

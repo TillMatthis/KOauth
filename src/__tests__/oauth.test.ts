@@ -5,10 +5,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import request from 'supertest'
-import { buildApp } from '@/app'
+import { buildApp } from '../app'
 import type { FastifyInstance } from 'fastify'
-import { prisma } from '@/lib/prisma'
-import * as oauthModule from '@/lib/auth/oauth'
+import { prisma } from '../lib/prisma'
+import * as oauthModule from '../lib/auth/oauth'
 
 describe('OAuth Authentication', () => {
   let app: FastifyInstance

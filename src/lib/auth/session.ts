@@ -3,9 +3,9 @@
  * Handles session creation, validation, and cleanup
  */
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../prisma'
 import { generateSessionId, generateToken, hashToken, getExpirationDate } from './tokens'
-import type { User } from '@/types/prisma'
+import type { User } from '../../types/prisma'
 
 const REFRESH_TOKEN_EXPIRY_DAYS = 7
 const SESSION_COOKIE_NAME = 'session_id'

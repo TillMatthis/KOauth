@@ -4,12 +4,12 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { prisma } from '@/lib/prisma'
-import { verifyPassword } from '@/lib/auth/password'
-import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
-import { loginSchema } from '@/lib/auth/validation'
-import { UnauthorizedError, ValidationError } from '@/lib/auth/errors'
-import { generateAccessToken, createTokenResponse } from '@/lib/auth/jwt'
+import { prisma } from '../../lib/prisma'
+import { verifyPassword } from '../../lib/auth/password'
+import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
+import { loginSchema } from '../../lib/auth/validation'
+import { UnauthorizedError, ValidationError } from '../../lib/auth/errors'
+import { generateAccessToken, createTokenResponse } from '../../lib/auth/jwt'
 import { z } from 'zod'
 
 interface LoginBody {

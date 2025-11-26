@@ -9,8 +9,8 @@ import fastifyHelmet from '@fastify/helmet'
 import fastifyCors from '@fastify/cors'
 import fastifyCookie from '@fastify/cookie'
 import fastifyRateLimit from '@fastify/rate-limit'
-import { envSchema } from '@/config/env'
-import { fastifyLogger } from '@/lib/logger'
+import { envSchema } from './config/env'
+import { fastifyLogger } from './lib/logger'
 
 /**
  * Build and configure the Fastify application
@@ -95,7 +95,7 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     })
 
     // Import and register auth routes
-    const { registerAuthRoutes } = await import('@/routes/auth')
+    const { registerAuthRoutes } = await import('./routes/auth')
     await registerAuthRoutes(authScope)
   })
 
@@ -118,12 +118,12 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     })
 
     // Import and register API routes
-    const { registerMeRoutes } = await import('@/routes/api/me')
+    const { registerMeRoutes } = await import('./routes/api/me')
     await registerMeRoutes(apiScope)
   }, { prefix: '/api/me' })
 
   // Register static UI plugin (after auth routes so API routes take precedence)
-  const staticUI = await import('@/plugins/static-ui')
+  const staticUI = await import('./plugins/static-ui')
   await app.register(staticUI.default)
 
   return app

@@ -4,9 +4,9 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { fetchGitHubUserInfo, findOrCreateOAuthUser } from '@/lib/auth/oauth'
-import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
-import { generateAccessToken } from '@/lib/auth/jwt'
+import { fetchGitHubUserInfo, findOrCreateOAuthUser } from '../../lib/auth/oauth'
+import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
+import { generateAccessToken } from '../../lib/auth/jwt'
 import { z } from 'zod'
 
 /**

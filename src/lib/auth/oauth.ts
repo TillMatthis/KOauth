@@ -3,7 +3,7 @@
  * Handles OAuth user creation and management
  */
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '../prisma'
 import { hashPassword } from './password'
 import { randomBytes } from 'crypto'
 

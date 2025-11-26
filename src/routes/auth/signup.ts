@@ -4,11 +4,11 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
-import { prisma } from '@/lib/prisma'
-import { hashPassword } from '@/lib/auth/password'
-import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '@/lib/auth/session'
-import { signupSchema } from '@/lib/auth/validation'
-import { ConflictError, ValidationError } from '@/lib/auth/errors'
+import { prisma } from '../../lib/prisma'
+import { hashPassword } from '../../lib/auth/password'
+import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
+import { signupSchema } from '../../lib/auth/validation'
+import { ConflictError, ValidationError } from '../../lib/auth/errors'
 import { z } from 'zod'
 
 interface SignupBody {

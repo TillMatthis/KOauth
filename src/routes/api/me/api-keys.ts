@@ -7,12 +7,12 @@
  */
 
 import type { FastifyInstance } from 'fastify'
-import { authenticate } from '@/lib/auth/middleware'
+import { authenticate } from '../../../lib/auth/middleware'
 import {
   createApiKey,
   listApiKeys,
   revokeApiKey
-} from '@/lib/auth/apikey'
+} from '../../../lib/auth/apikey'
 import { z } from 'zod'
 
 // Validation schemas

@@ -4,7 +4,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
-import { authenticate, getUser } from '@/lib/auth/middleware'
+import { authenticate, getUser } from '../../../lib/auth/middleware'
 import { apiKeyRoutes } from './api-keys'
 
 /**

@@ -3,8 +3,8 @@
  * Starts the Fastify server and handles graceful shutdown
  */
 
-import { buildApp } from '@/app'
-import { logger as mainLogger } from '@/lib/logger'
+import { buildApp } from './app'
+import { logger as mainLogger } from './lib/logger'
 
 const logger = mainLogger.child({ context: 'server' })
 
