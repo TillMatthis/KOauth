@@ -14,6 +14,9 @@ RUN npm ci --only=production && \
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl openssl-dev
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json* ./
@@ -26,6 +29,9 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY prisma ./prisma
 COPY client ./client
+
+# Install client dependencies
+RUN cd client && npm ci
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -50,8 +56,8 @@ COPY --from=builder --chown=koauth:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=koauth:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=koauth:nodejs /app/prisma ./prisma
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install OpenSSL for Prisma runtime and curl for health checks
+RUN apk add --no-cache openssl curl
 
 # Switch to non-root user
 USER koauth
