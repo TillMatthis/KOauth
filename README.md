@@ -93,6 +93,27 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
    - App: `http://localhost:3000`
    - Adminer (DB UI): `http://localhost:8080`
 
+3. **Deploying Updates (VPS)**
+
+   When you push changes to your VPS, use the deployment script:
+
+   ```bash
+   # SSH into your VPS
+   ssh your-server
+
+   # Navigate to the project directory
+   cd /path/to/koauth
+
+   # Run the deployment script
+   ./deploy.sh
+   ```
+
+   The script will:
+   - Pull the latest code from Git
+   - Rebuild the Docker image (including the client UI)
+   - Restart the containers with zero downtime
+   - Show recent logs for verification
+
 ## Using the Client SDK
 
 Get authentication in **5 lines of code** with `@tillmatthis/koauth-client`:
