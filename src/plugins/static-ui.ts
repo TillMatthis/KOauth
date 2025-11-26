@@ -13,7 +13,7 @@ const staticUIPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
 
   // In production, serve the built static files
   if (!isDev) {
-    const clientPath = path.join(process.cwd(), 'server/dist/client')
+    const clientPath = path.join(process.cwd(), 'dist/client')
 
     // Register static file serving for /auth
     await app.register(fastifyStatic, {
