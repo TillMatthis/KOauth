@@ -10,7 +10,7 @@ import fastifyCors from '@fastify/cors'
 import fastifyCookie from '@fastify/cookie'
 import fastifyRateLimit from '@fastify/rate-limit'
 import { envSchema } from '@/config/env'
-import { logger } from '@/lib/logger'
+import { fastifyLogger } from '@/lib/logger'
 
 /**
  * Build and configure the Fastify application
@@ -19,7 +19,7 @@ import { logger } from '@/lib/logger'
  */
 export async function buildApp(opts = {}): Promise<FastifyInstance> {
   const app = Fastify({
-    logger,
+    logger: fastifyLogger,
     requestIdLogLabel: 'reqId',
     disableRequestLogging: false,
     requestIdHeader: 'x-request-id',
