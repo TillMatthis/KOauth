@@ -6,6 +6,7 @@ import { Signup } from './pages/Signup'
 import { ForgotPassword } from './pages/ForgotPassword'
 import { Dashboard } from './pages/Dashboard'
 import { ApiKeys } from './pages/ApiKeys'
+import { OAuthConsent } from './pages/OAuthConsent'
 
 function App() {
   useEffect(() => {
@@ -30,6 +31,7 @@ function App() {
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/api-keys" element={<ApiKeys />} />
+          <Route path="/oauth/consent" element={<OAuthConsent />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

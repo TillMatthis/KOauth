@@ -101,6 +101,12 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     await registerAuthRoutes(authScope)
   }, { prefix: '/api/auth' })
 
+  // Register OAuth 2.0 routes (authorization server for multi-app)
+  await app.register(async (oauthScope) => {
+    const { registerOAuthRoutes } = await import('./routes/oauth')
+    await registerOAuthRoutes(oauthScope)
+  }, { prefix: '/oauth' })
+
   // Register public API key validation endpoint (no auth required)
   const { validateKeyRoute } = await import('./routes/validate-key')
   await validateKeyRoute(app)
