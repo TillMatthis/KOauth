@@ -14,7 +14,7 @@ export async function registerMeRoutes(app: FastifyInstance) {
   // GET /api/me - Get current user info
   // Protected by session cookie, API key, or JWT Bearer token
   app.get(
-    '/api/me',
+    '/',
     {
       preHandler: authenticate
     },

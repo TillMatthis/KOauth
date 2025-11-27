@@ -16,7 +16,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     // Verify user is authenticated
-    fetch('/api/auth/me', {
+    fetch('/api/me', {
       credentials: 'include',
     })
       .then(async (response) => {
