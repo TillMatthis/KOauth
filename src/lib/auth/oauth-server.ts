@@ -383,7 +383,7 @@ export async function cleanupExpiredTokens(): Promise<{ codes: number; tokens: n
  */
 function parseJwtExpiry(expiresIn: string): number {
   const match = expiresIn.match(/^(\d+)([smhd])$/)
-  if (!match) return 900 // Default 15 minutes
+  if (!match || !match[1] || !match[2]) return 900 // Default 15 minutes
 
   const value = parseInt(match[1], 10)
   const unit = match[2]
