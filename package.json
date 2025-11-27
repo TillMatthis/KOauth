@@ -19,6 +19,7 @@
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "oauth:register-client": "tsx scripts/register-oauth-client.ts",
     "docker:build": "docker build -t koauth .",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"

@@ -73,3 +73,76 @@ model UserApiKey {
 }
 
 // Note: OAuth integration completed in Task 1.4 (provider + providerId fields added to User model)
+
+// ============================================================
+// OAuth 2.0 Authorization Server (Multi-App Support)
+// ============================================================
+
+// OAuth Client applications (e.g., KURA Notes, future apps)
+model OAuthClient {
+  id                String   @id @default(cuid())
+  clientId          String   @unique @map("client_id") // Public identifier (e.g., "kura-notes")
+  clientSecret      String   @map("client_secret") // Hashed secret for token exchange
+  name              String   // Display name (e.g., "KURA Notes")
+  description       String?  // Optional description
+  redirectUris      String[] @map("redirect_uris") // Allowed callback URLs
+  grantTypes        String[] @map("grant_types") @default(["authorization_code", "refresh_token"]) // Allowed OAuth flows
+  scopes            String[] @default(["openid", "profile", "email"]) // Allowed scopes
+  logoUrl           String?  @map("logo_url") // Optional logo for consent screen
+  websiteUrl        String?  @map("website_url") // Optional website URL
+  trusted           Boolean  @default(false) // If true, skip consent screen
+  active            Boolean  @default(true) // Can be deactivated
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  authorizationCodes OAuthAuthorizationCode[]
+  refreshTokens      OAuthRefreshToken[]
+
+  @@index([clientId])
+  @@map("oauth_clients")
+}
+
+// OAuth Authorization Codes (short-lived, exchanged for tokens)
+model OAuthAuthorizationCode {
+  id           String   @id @default(cuid())
+  code         String   @unique // The authorization code
+  clientId     String   @map("client_id")
+  userId       String   @map("user_id")
+  redirectUri  String   @map("redirect_uri") // Must match one of client's registered URIs
+  scopes       String[] @default([]) // Granted scopes
+  expiresAt    DateTime @map("expires_at") // Codes expire in 10 minutes
+  codeChallenge String? @map("code_challenge") // PKCE support (optional)
+  codeChallengeMethod String? @map("code_challenge_method") // "S256" or "plain"
+  used         Boolean  @default(false) // Codes can only be used once
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([code])
+  @@index([clientId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("oauth_authorization_codes")
+}
+
+// OAuth Refresh Tokens (long-lived, used to get new access tokens)
+model OAuthRefreshToken {
+  id           String   @id @default(cuid())
+  token        String   @unique // Hashed refresh token
+  clientId     String   @map("client_id")
+  userId       String   @map("user_id")
+  scopes       String[] @default([])
+  expiresAt    DateTime @map("expires_at") // Refresh tokens expire in 30 days
+  revoked      Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([token])
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauth_refresh_tokens")
+}

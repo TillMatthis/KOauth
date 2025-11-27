@@ -1,0 +1,381 @@
+/**
+ * OAuth 2.0 Authorization Server Implementation
+ * Provides authorization code flow for multi-app authentication
+ */
+
+import { randomBytes, createHash } from 'crypto'
+import { hashToken, verifyToken } from './tokens'
+import { generateAccessToken } from './jwt'
+import { prisma } from '../prisma'
+import type { OAuthClient, OAuthAuthorizationCode } from '@prisma/client'
+
+// Configuration
+const AUTHORIZATION_CODE_EXPIRES_IN = 10 * 60 * 1000 // 10 minutes
+const REFRESH_TOKEN_EXPIRES_IN = 30 * 24 * 60 * 60 * 1000 // 30 days
+
+/**
+ * Generate a secure random authorization code
+ */
+export function generateAuthorizationCode(): string {
+  return randomBytes(32).toString('base64url')
+}
+
+/**
+ * Generate a secure random refresh token
+ */
+export function generateRefreshToken(): string {
+  return randomBytes(32).toString('base64url')
+}
+
+/**
+ * Verify PKCE code challenge
+ */
+export function verifyCodeChallenge(
+  codeVerifier: string,
+  codeChallenge: string,
+  method: string
+): boolean {
+  if (method === 'plain') {
+    return codeVerifier === codeChallenge
+  }
+
+  if (method === 'S256') {
+    const hash = createHash('sha256').update(codeVerifier).digest('base64url')
+    return hash === codeChallenge
+  }
+
+  return false
+}
+
+/**
+ * Validate OAuth client credentials
+ */
+export async function validateClientCredentials(
+  clientId: string,
+  clientSecret: string
+): Promise<OAuthClient | null> {
+  const client = await prisma.oAuthClient.findUnique({
+    where: { clientId }
+  })
+
+  if (!client || !client.active) {
+    return null
+  }
+
+  // Verify client secret (timing-safe comparison)
+  const isValid = await verifyToken(client.clientSecret, clientSecret)
+
+  return isValid ? client : null
+}
+
+/**
+ * Get OAuth client by ID
+ */
+export async function getClientById(clientId: string): Promise<OAuthClient | null> {
+  return prisma.oAuthClient.findUnique({
+    where: { clientId }
+  })
+}
+
+/**
+ * Validate redirect URI against client's registered URIs
+ */
+export function validateRedirectUri(client: OAuthClient, redirectUri: string): boolean {
+  return client.redirectUris.includes(redirectUri)
+}
+
+/**
+ * Validate requested scopes against client's allowed scopes
+ */
+export function validateScopes(client: OAuthClient, requestedScopes: string[]): boolean {
+  return requestedScopes.every(scope => client.scopes.includes(scope))
+}
+
+/**
+ * Create an authorization code
+ */
+export async function createAuthorizationCode(params: {
+  clientId: string
+  userId: string
+  redirectUri: string
+  scopes: string[]
+  codeChallenge?: string
+  codeChallengeMethod?: string
+}): Promise<string> {
+  const code = generateAuthorizationCode()
+  const expiresAt = new Date(Date.now() + AUTHORIZATION_CODE_EXPIRES_IN)
+
+  await prisma.oAuthAuthorizationCode.create({
+    data: {
+      code,
+      clientId: params.clientId,
+      userId: params.userId,
+      redirectUri: params.redirectUri,
+      scopes: params.scopes,
+      expiresAt,
+      codeChallenge: params.codeChallenge,
+      codeChallengeMethod: params.codeChallengeMethod
+    }
+  })
+
+  return code
+}
+
+/**
+ * Exchange authorization code for tokens
+ */
+export async function exchangeAuthorizationCode(params: {
+  code: string
+  clientId: string
+  redirectUri: string
+  codeVerifier?: string
+}): Promise<{
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+  userId: string
+  email: string
+} | null> {
+  // Find the authorization code
+  const authCode = await prisma.oAuthAuthorizationCode.findUnique({
+    where: { code: params.code },
+    include: { client: true }
+  })
+
+  if (!authCode) {
+    return null
+  }
+
+  // Check if code has been used
+  if (authCode.used) {
+    return null
+  }
+
+  // Check if code has expired
+  if (authCode.expiresAt < new Date()) {
+    return null
+  }
+
+  // Verify client ID matches
+  if (authCode.clientId !== params.clientId) {
+    return null
+  }
+
+  // Verify redirect URI matches
+  if (authCode.redirectUri !== params.redirectUri) {
+    return null
+  }
+
+  // Verify PKCE if used
+  if (authCode.codeChallenge) {
+    if (!params.codeVerifier) {
+      return null
+    }
+
+    const isValidChallenge = verifyCodeChallenge(
+      params.codeVerifier,
+      authCode.codeChallenge,
+      authCode.codeChallengeMethod || 'S256'
+    )
+
+    if (!isValidChallenge) {
+      return null
+    }
+  }
+
+  // Mark code as used
+  await prisma.oAuthAuthorizationCode.update({
+    where: { id: authCode.id },
+    data: { used: true }
+  })
+
+  // Get user info
+  const user = await prisma.user.findUnique({
+    where: { id: authCode.userId }
+  })
+
+  if (!user) {
+    return null
+  }
+
+  // Generate access token (JWT)
+  const jwtSecret = process.env.JWT_SECRET || 'default-secret'
+  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '15m'
+  const accessToken = generateAccessToken(user.id, user.email, jwtSecret, jwtExpiresIn)
+
+  // Generate refresh token
+  const refreshTokenValue = generateRefreshToken()
+  const refreshTokenHash = await hashToken(refreshTokenValue)
+  const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN)
+
+  await prisma.oAuthRefreshToken.create({
+    data: {
+      token: refreshTokenHash,
+      clientId: params.clientId,
+      userId: user.id,
+      scopes: authCode.scopes,
+      expiresAt: refreshExpiresAt
+    }
+  })
+
+  // Parse JWT expiration time
+  const expiresIn = parseJwtExpiry(jwtExpiresIn)
+
+  return {
+    accessToken,
+    refreshToken: refreshTokenValue,
+    expiresIn,
+    userId: user.id,
+    email: user.email
+  }
+}
+
+/**
+ * Refresh access token using refresh token
+ */
+export async function refreshAccessToken(params: {
+  refreshToken: string
+  clientId: string
+}): Promise<{
+  accessToken: string
+  refreshToken: string
+  expiresIn: number
+} | null> {
+  // Hash the provided refresh token
+  const tokenHash = await hashToken(params.refreshToken)
+
+  // Find the refresh token
+  const storedToken = await prisma.oAuthRefreshToken.findUnique({
+    where: { token: tokenHash }
+  })
+
+  if (!storedToken) {
+    return null
+  }
+
+  // Check if token is revoked
+  if (storedToken.revoked) {
+    return null
+  }
+
+  // Check if token has expired
+  if (storedToken.expiresAt < new Date()) {
+    return null
+  }
+
+  // Verify client ID matches
+  if (storedToken.clientId !== params.clientId) {
+    return null
+  }
+
+  // Get user info
+  const user = await prisma.user.findUnique({
+    where: { id: storedToken.userId }
+  })
+
+  if (!user) {
+    return null
+  }
+
+  // Generate new access token
+  const jwtSecret = process.env.JWT_SECRET || 'default-secret'
+  const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '15m'
+  const accessToken = generateAccessToken(user.id, user.email, jwtSecret, jwtExpiresIn)
+
+  // Generate new refresh token (token rotation)
+  const newRefreshTokenValue = generateRefreshToken()
+  const newRefreshTokenHash = await hashToken(newRefreshTokenValue)
+  const newExpiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRES_IN)
+
+  // Revoke old refresh token
+  await prisma.oAuthRefreshToken.update({
+    where: { id: storedToken.id },
+    data: { revoked: true }
+  })
+
+  // Create new refresh token
+  await prisma.oAuthRefreshToken.create({
+    data: {
+      token: newRefreshTokenHash,
+      clientId: params.clientId,
+      userId: user.id,
+      scopes: storedToken.scopes,
+      expiresAt: newExpiresAt
+    }
+  })
+
+  const expiresIn = parseJwtExpiry(jwtExpiresIn)
+
+  return {
+    accessToken,
+    refreshToken: newRefreshTokenValue,
+    expiresIn
+  }
+}
+
+/**
+ * Revoke a refresh token
+ */
+export async function revokeRefreshToken(refreshToken: string): Promise<boolean> {
+  const tokenHash = await hashToken(refreshToken)
+
+  try {
+    await prisma.oAuthRefreshToken.updateMany({
+      where: { token: tokenHash },
+      data: { revoked: true }
+    })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Clean up expired authorization codes and refresh tokens
+ */
+export async function cleanupExpiredTokens(): Promise<{ codes: number; tokens: number }> {
+  const now = new Date()
+
+  const [codes, tokens] = await Promise.all([
+    prisma.oAuthAuthorizationCode.deleteMany({
+      where: {
+        OR: [
+          { expiresAt: { lt: now } },
+          { used: true, createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // Delete used codes after 24h
+        ]
+      }
+    }),
+    prisma.oAuthRefreshToken.deleteMany({
+      where: {
+        OR: [
+          { expiresAt: { lt: now } },
+          { revoked: true, createdAt: { lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } // Delete revoked tokens after 7 days
+        ]
+      }
+    })
+  ])
+
+  return {
+    codes: codes.count,
+    tokens: tokens.count
+  }
+}
+
+/**
+ * Parse JWT expiry string to seconds
+ */
+function parseJwtExpiry(expiresIn: string): number {
+  const match = expiresIn.match(/^(\d+)([smhd])$/)
+  if (!match) return 900 // Default 15 minutes
+
+  const value = parseInt(match[1], 10)
+  const unit = match[2]
+
+  switch (unit) {
+    case 's': return value
+    case 'm': return value * 60
+    case 'h': return value * 60 * 60
+    case 'd': return value * 24 * 60 * 60
+    default: return 900
+  }
+}
