@@ -65,7 +65,7 @@ export const Signup: React.FC = () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/auth/signup', {
+      const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ export const Signup: React.FC = () => {
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
           Already have an account?{' '}
-          <Link to="/auth" className="link-text">
+          <Link to="/" className="link-text">
             Sign in
           </Link>
         </p>

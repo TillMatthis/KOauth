@@ -10,11 +10,11 @@ import { generateAccessToken } from '../../lib/auth/jwt'
 import { z } from 'zod'
 
 /**
- * GET /auth/google
+ * GET /api/auth/google
  * Redirect user to Google OAuth consent screen
  */
 export async function googleAuthRoute(app: FastifyInstance) {
-  app.get('/auth/google', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/google', async (request: FastifyRequest, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'google-auth' })
 
     try {
@@ -53,11 +53,11 @@ const callbackQuerySchema = z.object({
 })
 
 /**
- * GET /auth/google/callback
+ * GET /api/auth/google/callback
  * Handle OAuth callback from Google
  */
 export async function googleCallbackRoute(app: FastifyInstance) {
-  app.get('/auth/google/callback', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/google/callback', async (request: FastifyRequest, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'google-callback' })
 
     try {
@@ -148,7 +148,7 @@ export async function googleCallbackRoute(app: FastifyInstance) {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/auth',
+          path: '/api/auth',
           expires: expiresAt
         })
 

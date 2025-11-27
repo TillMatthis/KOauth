@@ -18,7 +18,7 @@ interface TokenBody {
 }
 
 export async function tokenRoute(app: FastifyInstance) {
-  app.post('/auth/token', async (request: FastifyRequest<{ Body: TokenBody }>, reply: FastifyReply) => {
+  app.post('/token', async (request: FastifyRequest<{ Body: TokenBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'token' })
 
     try {

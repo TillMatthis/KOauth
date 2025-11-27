@@ -1,5 +1,5 @@
 /**
- * POST /auth/login
+ * POST /api/auth/login
  * Authenticate user with email and password
  */
 
@@ -18,7 +18,7 @@ interface LoginBody {
 }
 
 export async function loginRoute(app: FastifyInstance) {
-  app.post('/auth/login', async (request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) => {
+  app.post('/login', async (request: FastifyRequest<{ Body: LoginBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'login' })
 
     try {
@@ -72,7 +72,7 @@ export async function loginRoute(app: FastifyInstance) {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/auth',
+          path: '/api/auth',
           expires: expiresAt
         })
 

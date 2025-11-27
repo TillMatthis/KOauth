@@ -71,7 +71,7 @@ Task 1.1 – Project Foundation
 Task 1.2 – Email/Password Auth
 - [ ] users table (id, email, password_hash, email_verified, created_at)
 - [ ] sessions table (id, user_id, expires_at, ip, user_agent)
-- [ ] POST /auth/signup, /auth/login
+- [ ] POST /api/auth/signup, /auth/login
 - [ ] Secure cookie session + refresh endpoint
 
 Task 1.3 – Personal API Keys (Critical for Kura legacy)

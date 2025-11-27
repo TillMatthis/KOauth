@@ -31,7 +31,7 @@
 #### Task 1.2 – Email/Password Auth
 - [x] users table (id, email, password_hash, email_verified, created_at)
 - [x] sessions table (id, user_id, expires_at, ip, user_agent, refresh_token)
-- [x] POST /auth/signup, /auth/login, /auth/refresh, /auth/logout
+- [x] POST /api/auth/signup, /auth/login, /auth/refresh, /auth/logout
 - [x] Secure HTTP-only cookie sessions with SameSite=Lax
 - [x] Refresh token rotation for enhanced security
 - [x] Argon2id password hashing (OWASP recommended)
@@ -105,10 +105,10 @@
 - [x] Upsert user on first login
 - [x] Configurable client IDs/secrets per provider
 - [x] Database schema: provider + providerId fields on User model
-- [x] GET /auth/google → redirect to Google OAuth consent
-- [x] GET /auth/google/callback → exchange code, create/login user, set session
-- [x] GET /auth/github → redirect to GitHub OAuth authorization
-- [x] GET /auth/github/callback → exchange code, create/login user, set session
+- [x] GET /api/auth/google → redirect to Google OAuth consent
+- [x] GET /api/auth/google/callback → exchange code, create/login user, set session
+- [x] GET /api/auth/github → redirect to GitHub OAuth authorization
+- [x] GET /api/auth/github/callback → exchange code, create/login user, set session
 - [x] Account linking: OAuth login with existing email merges accounts
 - [x] Security: Random password hash for OAuth users (prevents email/password login)
 - [x] Email verification: OAuth users auto-verified (emailVerified = true)
@@ -132,10 +132,10 @@
   - Secure cookie-based sessions (same as email/password auth)
 - Error handling: All errors redirect to homepage with query param (e.g., /?error=oauth_not_configured)
 - Routes implemented:
-  - GET /auth/google → builds OAuth URL, redirects to Google consent screen
-  - GET /auth/google/callback → validates code, exchanges for token, fetches user info, upserts user, creates session
-  - GET /auth/github → builds OAuth URL, redirects to GitHub authorization
-  - GET /auth/github/callback → validates code, exchanges for token, fetches user info (profile + emails), upserts user, creates session
+  - GET /api/auth/google → builds OAuth URL, redirects to Google consent screen
+  - GET /api/auth/google/callback → validates code, exchanges for token, fetches user info, upserts user, creates session
+  - GET /api/auth/github → builds OAuth URL, redirects to GitHub authorization
+  - GET /api/auth/github/callback → validates code, exchanges for token, fetches user info (profile + emails), upserts user, creates session
 - Helper module (lib/auth/oauth.ts):
   - findOrCreateOAuthUser: Smart upsert logic with account linking
   - fetchGoogleUserInfo: Fetches from google.com/oauth2/v2/userinfo
@@ -156,10 +156,10 @@
 - [x] Verify JWT OR API key in middleware
 - [x] attach request.user = { id, email }
 - [x] JWT_SECRET loaded from .env with validation
-- [x] POST /auth/token endpoint for token exchange (no session cookies)
-- [x] POST /auth/login now returns access_token, token_type, expires_in
-- [x] GET /auth/google/callback redirects with JWT in query param
-- [x] GET /auth/github/callback redirects with JWT in query param
+- [x] POST /api/auth/token endpoint for token exchange (no session cookies)
+- [x] POST /api/auth/login now returns access_token, token_type, expires_in
+- [x] GET /api/auth/google/callback redirects with JWT in query param
+- [x] GET /api/auth/github/callback redirects with JWT in query param
 - [x] GET /api/me endpoint protected by all three auth methods
 - [x] Helper functions: protectRoute(), getUser(req)
 - [x] Comprehensive test suite with 16 test cases
@@ -177,10 +177,10 @@
   2. Session cookie → traditional session-based auth
   3. If no valid auth found → 401 Unauthorized
 - New endpoints:
-  - POST /auth/token: Token exchange endpoint (email/password → JWT, no cookies)
+  - POST /api/auth/token: Token exchange endpoint (email/password → JWT, no cookies)
   - GET /api/me: Returns current user { id, email }, works with all three auth methods
 - Updated existing endpoints to issue JWTs:
-  - POST /auth/login: Now returns JWT access token + sets session cookies
+  - POST /api/auth/login: Now returns JWT access token + sets session cookies
   - OAuth callbacks (Google/GitHub): Redirect with access_token in query param
 - Helper functions added to middleware.ts:
   - protectRoute(): Returns authenticate middleware for route protection
@@ -204,7 +204,7 @@
   - Signature verification prevents tampering
   - Expired tokens automatically rejected by middleware
   - Bearer tokens take precedence over cookies (prevents session fixation attacks)
-- Ready for Claude Desktop MCP integration - MCP can use POST /auth/token to get JWT, then use Bearer header for all API calls
+- Ready for Claude Desktop MCP integration - MCP can use POST /api/auth/token to get JWT, then use Bearer header for all API calls
 
 ---
 
@@ -279,9 +279,9 @@
 #### Task 1.7 – Built-in Auth UI
 - [x] Created client/ directory with Vite + React + TypeScript
 - [x] Installed and configured Tailwind CSS v3 with dark mode
-- [x] Built stunning Login page (/auth) with email/password and social login
-- [x] Built beautiful Signup page (/auth/signup) with password validation
-- [x] Built Forgot Password page (/auth/forgot) stub (Phase 2 preview)
+- [x] Built stunning Login page (/) with email/password and social login
+- [x] Built beautiful Signup page (/signup) with password validation
+- [x] Built Forgot Password page (/forgot) stub (Phase 2 preview)
 - [x] Implemented client-side routing with React Router
 - [x] Added redirect parameter support (?redirect=/dashboard)
 - [x] Error handling via query params (?error=error_code)
@@ -319,9 +319,9 @@
   - ✅ Smooth fade-in animations
 - Fastify static-ui plugin:
   - Serves built client from server/dist/client in production
-  - Handles client-side routing (all /auth/* routes serve index.html)
+  - Handles client-side routing (all UI routes serve index.html from root)
   - Shows helpful dev message in development mode
-  - Registered after auth routes so API routes take precedence
+  - Registered after API routes so /api/* routes take precedence
 - Build system:
   - Vite outputs to server/dist/client (alongside server dist)
   - npm run build builds both server and client

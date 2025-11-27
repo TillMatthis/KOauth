@@ -12,7 +12,7 @@ interface RefreshBody {
 }
 
 export async function refreshRoute(app: FastifyInstance) {
-  app.post('/auth/refresh', async (request: FastifyRequest<{ Body: RefreshBody }>, reply: FastifyReply) => {
+  app.post('/refresh', async (request: FastifyRequest<{ Body: RefreshBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'refresh' })
 
     try {
@@ -63,7 +63,7 @@ export async function refreshRoute(app: FastifyInstance) {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/auth',
+          path: '/api/auth',
           expires: newSession.expiresAt
         })
 
@@ -77,7 +77,7 @@ export async function refreshRoute(app: FastifyInstance) {
       // Clear cookies on error
       reply
         .clearCookie(SESSION_COOKIE_NAME, { path: '/' })
-        .clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' })
+        .clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' })
 
       if (error instanceof Error && error.message.includes('Invalid refresh token')) {
         // Possible token reuse attack - all user sessions have been invalidated
