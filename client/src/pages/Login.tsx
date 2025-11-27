@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export const Login: React.FC = () => {
               </span>
             </label>
 
-            <Link to="/auth/forgot" className="text-sm link-text">
+            <Link to="/forgot" className="text-sm link-text">
               Forgot password?
             </Link>
           </div>
@@ -148,7 +148,7 @@ export const Login: React.FC = () => {
 
         <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
           Don't have an account?{' '}
-          <Link to="/auth/signup" className="link-text">
+          <Link to="/signup" className="link-text">
             Sign up
           </Link>
         </p>

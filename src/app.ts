@@ -99,7 +99,7 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     // Import and register auth routes
     const { registerAuthRoutes } = await import('./routes/auth')
     await registerAuthRoutes(authScope)
-  })
+  }, { prefix: '/api/auth' })
 
   // Register API routes with rate limiting
   await app.register(async (apiScope) => {

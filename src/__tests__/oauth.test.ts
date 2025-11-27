@@ -17,10 +17,10 @@ describe('OAuth Authentication', () => {
     // Set OAuth environment variables for testing
     process.env.GOOGLE_CLIENT_ID = 'test-google-client-id'
     process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret'
-    process.env.GOOGLE_REDIRECT_URI = 'http://localhost:3000/auth/google/callback'
+    process.env.GOOGLE_REDIRECT_URI = 'http://localhost:3000/api/auth/google/callback'
     process.env.GITHUB_CLIENT_ID = 'test-github-client-id'
     process.env.GITHUB_CLIENT_SECRET = 'test-github-client-secret'
-    process.env.GITHUB_REDIRECT_URI = 'http://localhost:3000/auth/github/callback'
+    process.env.GITHUB_REDIRECT_URI = 'http://localhost:3000/api/auth/github/callback'
 
     app = await buildApp({ logger: false })
     await app.ready()
@@ -35,17 +35,17 @@ describe('OAuth Authentication', () => {
   })
 
   describe('Google OAuth', () => {
-    describe('GET /auth/google', () => {
+    describe('GET /api/auth/google', () => {
       it('should redirect to Google OAuth consent screen', async () => {
         const response = await request(app.server)
-          .get('/auth/google')
+          .get('/api/auth/google')
           .expect(302)
 
         // Verify redirect URL
         const location = response.headers.location
         expect(location).toContain('accounts.google.com/o/oauth2/v2/auth')
         expect(location).toContain('client_id=test-google-client-id')
-        expect(location).toContain('redirect_uri=http://localhost:3000/auth/google/callback')
+        expect(location).toContain('redirect_uri=http://localhost:3000/api/auth/google/callback')
         expect(location).toContain('scope=openid%20email%20profile')
       })
 
@@ -56,7 +56,7 @@ describe('OAuth Authentication', () => {
         await testApp.ready()
 
         const response = await request(testApp.server)
-          .get('/auth/google')
+          .get('/api/auth/google')
           .expect(302)
 
         expect(response.headers.location).toContain('error=oauth_not_configured')
@@ -64,7 +64,7 @@ describe('OAuth Authentication', () => {
       })
     })
 
-    describe('GET /auth/google/callback', () => {
+    describe('GET /api/auth/google/callback', () => {
       it('should create new user on first Google login', async () => {
         // Mock fetch for token exchange
         global.fetch = vi.fn((url: string) => {
@@ -86,7 +86,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/google/callback?code=test-auth-code')
+          .get('/api/auth/google/callback?code=test-auth-code')
           .expect(302)
 
         // Should redirect to home
@@ -140,7 +140,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/google/callback?code=test-auth-code')
+          .get('/api/auth/google/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toBe('/')
@@ -153,7 +153,7 @@ describe('OAuth Authentication', () => {
       it('should link Google account to existing email/password user', async () => {
         // Create existing email/password user
         await request(app.server)
-          .post('/auth/signup')
+          .post('/api/auth/signup')
           .send({
             email: 'linktest@gmail.com',
             password: 'Test123!@#'
@@ -179,7 +179,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/google/callback?code=test-auth-code')
+          .get('/api/auth/google/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toBe('/')
@@ -195,7 +195,7 @@ describe('OAuth Authentication', () => {
 
       it('should handle missing authorization code', async () => {
         const response = await request(app.server)
-          .get('/auth/google/callback')
+          .get('/api/auth/google/callback')
           .expect(302)
 
         expect(response.headers.location).toContain('error=invalid_callback')
@@ -203,7 +203,7 @@ describe('OAuth Authentication', () => {
 
       it('should handle OAuth error from Google', async () => {
         const response = await request(app.server)
-          .get('/auth/google/callback?error=access_denied')
+          .get('/api/auth/google/callback?error=access_denied')
           .expect(302)
 
         expect(response.headers.location).toContain('error=access_denied')
@@ -220,7 +220,7 @@ describe('OAuth Authentication', () => {
         }) as any
 
         const response = await request(app.server)
-          .get('/auth/google/callback?code=test-auth-code')
+          .get('/api/auth/google/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toContain('error=token_exchange_failed')
@@ -229,10 +229,10 @@ describe('OAuth Authentication', () => {
   })
 
   describe('GitHub OAuth', () => {
-    describe('GET /auth/github', () => {
+    describe('GET /api/auth/github', () => {
       it('should redirect to GitHub OAuth authorization screen', async () => {
         const response = await request(app.server)
-          .get('/auth/github')
+          .get('/api/auth/github')
           .expect(302)
 
         // Verify redirect URL
@@ -250,7 +250,7 @@ describe('OAuth Authentication', () => {
         await testApp.ready()
 
         const response = await request(testApp.server)
-          .get('/auth/github')
+          .get('/api/auth/github')
           .expect(302)
 
         expect(response.headers.location).toContain('error=oauth_not_configured')
@@ -258,7 +258,7 @@ describe('OAuth Authentication', () => {
       })
     })
 
-    describe('GET /auth/github/callback', () => {
+    describe('GET /api/auth/github/callback', () => {
       it('should create new user on first GitHub login', async () => {
         // Mock fetch for token exchange
         global.fetch = vi.fn((url: string) => {
@@ -280,7 +280,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/github/callback?code=test-auth-code')
+          .get('/api/auth/github/callback?code=test-auth-code')
           .expect(302)
 
         // Should redirect to home
@@ -334,7 +334,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/github/callback?code=test-auth-code')
+          .get('/api/auth/github/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toBe('/')
@@ -347,7 +347,7 @@ describe('OAuth Authentication', () => {
       it('should link GitHub account to existing email/password user', async () => {
         // Create existing email/password user
         await request(app.server)
-          .post('/auth/signup')
+          .post('/api/auth/signup')
           .send({
             email: 'githublink@example.com',
             password: 'Test123!@#'
@@ -373,7 +373,7 @@ describe('OAuth Authentication', () => {
         })
 
         const response = await request(app.server)
-          .get('/auth/github/callback?code=test-auth-code')
+          .get('/api/auth/github/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toBe('/')
@@ -389,7 +389,7 @@ describe('OAuth Authentication', () => {
 
       it('should handle missing authorization code', async () => {
         const response = await request(app.server)
-          .get('/auth/github/callback')
+          .get('/api/auth/github/callback')
           .expect(302)
 
         expect(response.headers.location).toContain('error=invalid_callback')
@@ -397,7 +397,7 @@ describe('OAuth Authentication', () => {
 
       it('should handle OAuth error from GitHub', async () => {
         const response = await request(app.server)
-          .get('/auth/github/callback?error=access_denied&error_description=User%20denied%20access')
+          .get('/api/auth/github/callback?error=access_denied&error_description=User%20denied%20access')
           .expect(302)
 
         expect(response.headers.location).toContain('error=access_denied')
@@ -414,7 +414,7 @@ describe('OAuth Authentication', () => {
         }) as any
 
         const response = await request(app.server)
-          .get('/auth/github/callback?code=test-auth-code')
+          .get('/api/auth/github/callback?code=test-auth-code')
           .expect(302)
 
         expect(response.headers.location).toContain('error=token_exchange_failed')

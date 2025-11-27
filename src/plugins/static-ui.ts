@@ -1,6 +1,6 @@
 /**
  * Static UI Plugin
- * Serves the built React client from /auth/*
+ * Serves the built React client from / root
  */
 
 import { FastifyInstance, FastifyPluginAsync } from 'fastify'
@@ -15,19 +15,19 @@ const staticUIPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
   if (!isDev) {
     const clientPath = path.join(process.cwd(), 'dist/client')
 
-    // Register static file serving for /auth
+    // Register static file serving from root
     await app.register(fastifyStatic, {
       root: clientPath,
-      prefix: '/auth',
+      prefix: '/',
       decorateReply: true,
     })
 
     // Catch-all route for client-side routing
-    // This ensures that /auth/signup, /auth/forgot etc. all serve index.html
-    // BUT we need to exclude /auth/assets/* to allow static files to be served
+    // This ensures that /signup, /forgot etc. all serve index.html
+    // BUT we need to exclude /assets/* and /api/* to allow static files and API routes
     app.setNotFoundHandler((_request, reply) => {
-      // Only handle /auth/* routes, but NOT /auth/assets/*
-      if (_request.url.startsWith('/auth') && !_request.url.startsWith('/auth/assets')) {
+      // Only handle UI routes (not /assets/* or /api/*)
+      if (!_request.url.startsWith('/assets') && !_request.url.startsWith('/api')) {
         reply.sendFile('index.html')
       } else {
         reply.code(404).send({
@@ -41,11 +41,11 @@ const staticUIPlugin: FastifyPluginAsync = async (app: FastifyInstance) => {
     app.log.info('Static UI plugin registered (production mode)')
   } else {
     // In development, proxy to Vite dev server or show a message
-    app.get('/auth', async (_request, reply) => {
+    app.get('/', async (_request, reply) => {
       return reply.send({
         message: 'Auth UI is in development mode',
         note: 'Run the Vite dev server in client/ directory with: npm run dev',
-        viteDev: 'http://localhost:5173/auth',
+        viteDev: 'http://localhost:5173',
       })
     })
 

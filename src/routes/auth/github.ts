@@ -10,11 +10,11 @@ import { generateAccessToken } from '../../lib/auth/jwt'
 import { z } from 'zod'
 
 /**
- * GET /auth/github
+ * GET /api/auth/github
  * Redirect user to GitHub OAuth authorization screen
  */
 export async function githubAuthRoute(app: FastifyInstance) {
-  app.get('/auth/github', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/github', async (request: FastifyRequest, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'github-auth' })
 
     try {
@@ -52,11 +52,11 @@ const callbackQuerySchema = z.object({
 })
 
 /**
- * GET /auth/github/callback
+ * GET /api/auth/github/callback
  * Handle OAuth callback from GitHub
  */
 export async function githubCallbackRoute(app: FastifyInstance) {
-  app.get('/auth/github/callback', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/github/callback', async (request: FastifyRequest, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'github-callback' })
 
     try {
@@ -147,7 +147,7 @@ export async function githubCallbackRoute(app: FastifyInstance) {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/auth',
+          path: '/api/auth',
           expires: expiresAt
         })
 

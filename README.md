@@ -175,8 +175,8 @@ KOauth includes a beautiful, production-ready authentication UI that works out o
 ### Available Routes
 
 - **`/auth`** - Login page with email/password and social login
-- **`/auth/signup`** - User registration with password validation
-- **`/auth/forgot`** - Password reset (Phase 2 preview)
+- **`/signup`** - User registration with password validation
+- **`/forgot`** - Password reset (Phase 2 preview)
 
 ### Features
 

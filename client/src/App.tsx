@@ -19,7 +19,7 @@ function App() {
   }, [])
 
   return (
-    <BrowserRouter basename="/auth">
+    <BrowserRouter basename="/">
       <div className="relative min-h-screen">
         <ThemeToggle />
         <Routes>

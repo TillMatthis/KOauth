@@ -8,4 +8,5 @@ Key Decisions:
 - All passwords: Argon2id
 - All secrets: libsodium where possible
 - Client SDK works with any Fastify/Express app
-- Login UI: React + Vite served from same server at /auth
+- Login UI: React + Vite served from root (/)
+- API routes: All auth endpoints under /api/auth/*

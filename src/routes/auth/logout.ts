@@ -7,7 +7,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { deleteSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
 
 export async function logoutRoute(app: FastifyInstance) {
-  app.post('/auth/logout', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/logout', async (request: FastifyRequest, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'logout' })
 
     try {
@@ -22,7 +22,7 @@ export async function logoutRoute(app: FastifyInstance) {
       // Clear cookies
       reply
         .clearCookie(SESSION_COOKIE_NAME, { path: '/' })
-        .clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' })
+        .clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' })
 
       logger.info('Logout successful')
 
@@ -36,7 +36,7 @@ export async function logoutRoute(app: FastifyInstance) {
       // Still clear cookies even on error
       reply
         .clearCookie(SESSION_COOKIE_NAME, { path: '/' })
-        .clearCookie(REFRESH_COOKIE_NAME, { path: '/auth' })
+        .clearCookie(REFRESH_COOKIE_NAME, { path: '/api/auth' })
 
       return reply.code(200).send({
         success: true,

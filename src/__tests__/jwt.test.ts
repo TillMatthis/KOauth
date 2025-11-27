@@ -22,7 +22,7 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
     // Create test user
     const signupResponse = await app.inject({
       method: 'POST',
-      url: '/auth/signup',
+      url: '/api/auth/signup',
       payload: {
         email: 'jwt-test@example.com',
         password: 'SecurePass123!@#'
@@ -39,11 +39,11 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
     await app.close()
   })
 
-  describe('POST /auth/login - JWT Token Issuance', () => {
+  describe('POST /api/auth/login - JWT Token Issuance', () => {
     it('should return JWT access token on successful login', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/login',
+        url: '/api/auth/login',
         payload: {
           email: testUserEmail,
           password: 'SecurePass123!@#'
@@ -93,11 +93,11 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
     })
   })
 
-  describe('POST /auth/token - Token Exchange Endpoint', () => {
+  describe('POST /api/auth/token - Token Exchange Endpoint', () => {
     it('should issue JWT token without creating session', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/token',
+        url: '/api/auth/token',
         payload: {
           email: testUserEmail,
           password: 'SecurePass123!@#'
@@ -120,7 +120,7 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
     it('should reject invalid credentials', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/token',
+        url: '/api/auth/token',
         payload: {
           email: testUserEmail,
           password: 'WrongPassword123!'
@@ -304,7 +304,7 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
       // Create a different user
       const user2Response = await app.inject({
         method: 'POST',
-        url: '/auth/signup',
+        url: '/api/auth/signup',
         payload: {
           email: 'jwt-test-2@example.com',
           password: 'SecurePass123!@#'
@@ -335,7 +335,7 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
     it('should issue JWT with 15-minute expiration', async () => {
       const response = await app.inject({
         method: 'POST',
-        url: '/auth/token',
+        url: '/api/auth/token',
         payload: {
           email: testUserEmail,
           password: 'SecurePass123!@#'

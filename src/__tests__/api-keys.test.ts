@@ -20,7 +20,7 @@ describe('API Keys', () => {
 
     // Create a test user and get session
     const signupResponse = await request(app.server)
-      .post('/auth/signup')
+      .post('/api/auth/signup')
       .send({
         email: 'apikeys@example.com',
         password: 'Test123!@#'
@@ -241,7 +241,7 @@ describe('API Keys', () => {
     it('should not allow revoking another user\'s key', async () => {
       // Create another user
       const user2Response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'user2@example.com',
           password: 'Test123!@#'
@@ -411,7 +411,7 @@ describe('API Keys', () => {
     it('should prioritize Bearer token over session cookie', async () => {
       // Create another user with session
       const user2Response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'user2parallel@example.com',
           password: 'Test123!@#'

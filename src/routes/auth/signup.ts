@@ -1,5 +1,5 @@
 /**
- * POST /auth/signup
+ * POST /api/auth/signup
  * Register a new user with email and password
  */
 
@@ -17,7 +17,7 @@ interface SignupBody {
 }
 
 export async function signupRoute(app: FastifyInstance) {
-  app.post('/auth/signup', async (request: FastifyRequest<{ Body: SignupBody }>, reply: FastifyReply) => {
+  app.post('/signup', async (request: FastifyRequest<{ Body: SignupBody }>, reply: FastifyReply) => {
     const logger = request.log.child({ route: 'signup' })
 
     try {
@@ -74,7 +74,7 @@ export async function signupRoute(app: FastifyInstance) {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/auth',
+          path: '/api/auth',
           expires: expiresAt
         })
 

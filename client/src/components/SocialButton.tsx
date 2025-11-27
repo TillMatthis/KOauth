@@ -11,7 +11,7 @@ export const SocialButton: React.FC<SocialButtonProps> = ({ provider, onClick })
       onClick()
     } else {
       // Redirect to OAuth provider
-      window.location.href = `/auth/${provider}`
+      window.location.href = `/api/auth/${provider}`
     }
   }
 

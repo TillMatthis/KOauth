@@ -21,10 +21,10 @@ describe('Authentication API', () => {
     await app.close()
   })
 
-  describe('POST /auth/signup', () => {
+  describe('POST /api/auth/signup', () => {
     it('should create a new user with valid credentials', async () => {
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -54,7 +54,7 @@ describe('Authentication API', () => {
     it('should reject signup with existing email', async () => {
       // Create first user
       await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -62,7 +62,7 @@ describe('Authentication API', () => {
 
       // Try to create duplicate
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'DifferentPass123!@#'
@@ -75,7 +75,7 @@ describe('Authentication API', () => {
 
     it('should reject weak passwords', async () => {
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'weak'
@@ -87,7 +87,7 @@ describe('Authentication API', () => {
 
     it('should reject invalid email format', async () => {
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'not-an-email',
           password: 'Test123!@#'
@@ -99,7 +99,7 @@ describe('Authentication API', () => {
 
     it('should normalize email to lowercase', async () => {
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'TEST@EXAMPLE.COM',
           password: 'Test123!@#'
@@ -110,11 +110,11 @@ describe('Authentication API', () => {
     })
   })
 
-  describe('POST /auth/login', () => {
+  describe('POST /api/auth/login', () => {
     beforeEach(async () => {
       // Create a test user
       await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -123,7 +123,7 @@ describe('Authentication API', () => {
 
     it('should login with valid credentials', async () => {
       const response = await request(app.server)
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -142,7 +142,7 @@ describe('Authentication API', () => {
 
     it('should reject login with wrong password', async () => {
       const response = await request(app.server)
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'test@example.com',
           password: 'WrongPassword123!@#'
@@ -155,7 +155,7 @@ describe('Authentication API', () => {
 
     it('should reject login with non-existent email', async () => {
       const response = await request(app.server)
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'nonexistent@example.com',
           password: 'Test123!@#'
@@ -168,7 +168,7 @@ describe('Authentication API', () => {
 
     it('should be case-insensitive for email', async () => {
       const response = await request(app.server)
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: 'TEST@EXAMPLE.COM',
           password: 'Test123!@#'
@@ -179,14 +179,14 @@ describe('Authentication API', () => {
     })
   })
 
-  describe('POST /auth/refresh', () => {
+  describe('POST /api/auth/refresh', () => {
     let sessionCookie: string
     let refreshCookie: string
 
     beforeEach(async () => {
       // Create user and get session
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -199,7 +199,7 @@ describe('Authentication API', () => {
 
     it('should refresh session with valid tokens', async () => {
       const response = await request(app.server)
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', [sessionCookie, refreshCookie])
         .expect(200)
 
@@ -215,7 +215,7 @@ describe('Authentication API', () => {
 
     it('should reject refresh without session cookie', async () => {
       const response = await request(app.server)
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', [refreshCookie])
         .expect(401)
 
@@ -224,7 +224,7 @@ describe('Authentication API', () => {
 
     it('should reject refresh without refresh token', async () => {
       const response = await request(app.server)
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', [sessionCookie])
         .expect(401)
 
@@ -233,7 +233,7 @@ describe('Authentication API', () => {
 
     it('should reject refresh with invalid refresh token', async () => {
       const response = await request(app.server)
-        .post('/auth/refresh')
+        .post('/api/auth/refresh')
         .set('Cookie', [sessionCookie, 'refresh_token=invalid'])
         .expect(401)
 
@@ -241,14 +241,14 @@ describe('Authentication API', () => {
     })
   })
 
-  describe('POST /auth/logout', () => {
+  describe('POST /api/auth/logout', () => {
     let sessionCookie: string
     let refreshCookie: string
 
     beforeEach(async () => {
       // Create user and get session
       const response = await request(app.server)
-        .post('/auth/signup')
+        .post('/api/auth/signup')
         .send({
           email: 'test@example.com',
           password: 'Test123!@#'
@@ -261,7 +261,7 @@ describe('Authentication API', () => {
 
     it('should logout and clear cookies', async () => {
       const response = await request(app.server)
-        .post('/auth/logout')
+        .post('/api/auth/logout')
         .set('Cookie', [sessionCookie, refreshCookie])
         .expect(200)
 
@@ -276,7 +276,7 @@ describe('Authentication API', () => {
 
     it('should logout even without session cookie', async () => {
       const response = await request(app.server)
-        .post('/auth/logout')
+        .post('/api/auth/logout')
         .expect(200)
 
       expect(response.body.success).toBe(true)
@@ -287,7 +287,7 @@ describe('Authentication API', () => {
       const sessionId = sessionCookie.match(/session_id=([^;]+)/)?.[1]
 
       await request(app.server)
-        .post('/auth/logout')
+        .post('/api/auth/logout')
         .set('Cookie', [sessionCookie, refreshCookie])
         .expect(200)
 
@@ -304,7 +304,7 @@ describe('Authentication API', () => {
       // Make 6 requests (limit is 5 per 15 minutes)
       const requests = Array(6).fill(null).map(() =>
         request(app.server)
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             email: 'test@example.com',
             password: 'Test123!@#'
