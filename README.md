@@ -68,7 +68,7 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
 7. **Access the Auth UI**
    ```bash
    # Open in your browser
-   http://localhost:3000/auth
+   http://localhost:3000/
    ```
 
    The built-in auth UI provides:
@@ -77,6 +77,7 @@ KOauth is a modern, TypeScript-native authentication server built on Fastify tha
    - 🔐 Social login buttons (Google + GitHub)
    - ✨ Smooth animations and modern UX
    - 🎯 Zero configuration needed!
+   - 📊 User dashboard with account information
 
 ### Docker Deployment
 
@@ -174,13 +175,14 @@ KOauth includes a beautiful, production-ready authentication UI that works out o
 
 ### Available Routes
 
-- **`/auth`** - Login page with email/password and social login
+- **`/`** - Login page with email/password and social login
 - **`/signup`** - User registration with password validation
 - **`/forgot`** - Password reset (Phase 2 preview)
+- **`/dashboard`** - User dashboard (requires authentication)
 
 ### Features
 
-- ✨ **Zero Configuration** - Just visit `/auth` and you're done
+- ✨ **Zero Configuration** - Just visit `/` and you're done
 - 🎨 **Beautiful Design** - Modern UI inspired by Clerk and Auth0
 - 🌓 **Dark Mode** - Automatic theme detection with manual toggle
 - 📱 **Fully Responsive** - Works perfectly on mobile, tablet, and desktop
@@ -188,6 +190,20 @@ KOauth includes a beautiful, production-ready authentication UI that works out o
 - ⚡ **Fast** - Built with React + Vite, optimized production builds
 - 🎯 **Smart Redirects** - Supports `?redirect=/dashboard` after login
 - 🚨 **Error Handling** - Beautiful error messages from query params
+- 📊 **User Dashboard** - View account details and manage sessions
+
+### User Dashboard
+
+After successful login, users are redirected to `/dashboard` which displays:
+
+- **Account Information**
+  - Email address
+  - Verification status (verified/not verified)
+  - Member since date
+- **Session Management**
+  - Sign out button to end current session
+
+The dashboard automatically checks authentication on load and redirects unauthenticated users to the login page.
 
 ### Development
 
@@ -202,7 +218,7 @@ cd client
 npm run dev
 ```
 
-In production, the UI is built and served as static files from `/auth`.
+In production, the UI is built and served as static files.
 
 ## Project Structure
 
