@@ -72,8 +72,8 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     }
   })
 
-  // Root endpoint
-  app.get('/', async () => {
+  // API info endpoint
+  app.get('/api', async () => {
     return {
       name: 'KOauth',
       version: '0.1.0',
