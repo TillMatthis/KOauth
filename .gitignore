@@ -43,8 +43,10 @@ coverage/
 *.db-shm
 
 # Prisma
-prisma/migrations/
-!prisma/migrations/.gitkeep
+# Note: Migrations should be committed to version control
+# Only ignore the migration lock if using multiple databases
+# prisma/migrations/
+# !prisma/migrations/.gitkeep
 
 # =============================================================================
 # IDE & Editors
