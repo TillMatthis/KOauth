@@ -9,6 +9,7 @@ import fastifyHelmet from '@fastify/helmet'
 import fastifyCors from '@fastify/cors'
 import fastifyCookie from '@fastify/cookie'
 import fastifyRateLimit from '@fastify/rate-limit'
+import fastifyFormbody from '@fastify/formbody'
 import { envSchema } from './config/env'
 import { fastifyLogger } from './lib/logger'
 
@@ -56,6 +57,9 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     secret: app.config.SESSION_SECRET,
     hook: 'onRequest'
   })
+
+  // Parse form data (application/x-www-form-urlencoded)
+  await app.register(fastifyFormbody)
 
   await app.register(fastifyRateLimit, {
     max: 100,
