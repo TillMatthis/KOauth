@@ -111,7 +111,7 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   const { validateKeyRoute } = await import('./routes/validate-key')
   await validateKeyRoute(app)
 
-  // Register API routes with rate limiting
+  // Register /api/me routes with rate limiting
   await app.register(async (apiScope) => {
     // Rate limit for API endpoints (stricter for key generation)
     await apiScope.register(fastifyRateLimit, {
@@ -133,6 +133,12 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     const { registerMeRoutes } = await import('./routes/api/me')
     await registerMeRoutes(apiScope)
   }, { prefix: '/api/me' })
+
+  // Register /api/oauth routes (public OAuth client info)
+  await app.register(async (apiOAuthScope) => {
+    const { registerOAuthApiRoutes } = await import('./routes/api/oauth')
+    await registerOAuthApiRoutes(apiOAuthScope)
+  }, { prefix: '/api/oauth' })
 
   // Register static UI plugin (after auth routes so API routes take precedence)
   const staticUI = await import('./plugins/static-ui')
