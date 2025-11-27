@@ -48,8 +48,8 @@ export const Login: React.FC = () => {
         return
       }
 
-      // Success! Redirect to the redirect URL or home
-      const redirectUrl = searchParams.get('redirect') || '/'
+      // Success! Redirect to the redirect URL or dashboard
+      const redirectUrl = searchParams.get('redirect') || '/dashboard'
       window.location.href = redirectUrl
     } catch (err) {
       setError('Network error. Please try again.')
