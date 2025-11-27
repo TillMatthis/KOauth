@@ -5,7 +5,7 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
-import { getUser } from '../../lib/auth/middleware'
+import { optionalAuthenticate } from '../../lib/auth/middleware'
 import {
   getClientById,
   validateRedirectUri,
@@ -34,13 +34,15 @@ export async function authorizeRoute(app: FastifyInstance) {
       // Parse and validate query parameters
       const params = authorizeSchema.parse(request.query)
 
-      // Check if user is logged in
-      const user = getUser(request)
-      if (!user) {
+      // Check if user is logged in (populate request.user from session cookie)
+      await optionalAuthenticate(request)
+      if (!request.user) {
         // Redirect to login with return URL
         const returnUrl = encodeURIComponent(request.url)
         return reply.redirect(`/?redirect=/oauth${returnUrl}`)
       }
+
+      const user = request.user
 
       // Validate client
       const client = await getClientById(params.client_id)
@@ -111,13 +113,16 @@ export async function authorizeRoute(app: FastifyInstance) {
   // POST /oauth/authorize - Handle consent form submission
   app.post('/authorize', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const user = getUser(request)
-      if (!user) {
+      // Check if user is logged in (populate request.user from session cookie)
+      await optionalAuthenticate(request)
+      if (!request.user) {
         return reply.status(401).send({
           error: 'unauthorized',
           error_description: 'User not authenticated'
         })
       }
+
+      const user = request.user
 
       const body = request.body as any
       const params = authorizeSchema.parse(body)
