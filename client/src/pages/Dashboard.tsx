@@ -96,9 +96,26 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
+        <div className="space-y-3 mb-6">
+          <button
+            onClick={() => navigate('/api-keys')}
+            className="w-full px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-left"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-medium text-blue-900 dark:text-blue-100">API Keys</h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Manage keys for programmatic access
+                </p>
+              </div>
+              <span className="text-blue-600 dark:text-blue-400">→</span>
+            </div>
+          </button>
+        </div>
+
         <button
           onClick={handleLogout}
-          className="btn-primary"
+          className="btn-primary w-full"
         >
           Sign Out
         </button>

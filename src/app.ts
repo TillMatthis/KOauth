@@ -101,6 +101,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     await registerAuthRoutes(authScope)
   }, { prefix: '/api/auth' })
 
+  // Register public API key validation endpoint (no auth required)
+  const { validateKeyRoute } = await import('./routes/validate-key')
+  await validateKeyRoute(app)
+
   // Register API routes with rate limiting
   await app.register(async (apiScope) => {
     // Rate limit for API endpoints (stricter for key generation)

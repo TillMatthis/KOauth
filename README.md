@@ -204,6 +204,105 @@ npm run dev
 
 In production, the UI is built and served as static files from `/auth`.
 
+## API Key Authentication
+
+KOauth provides secure, long-lived API keys for programmatic access. Perfect for:
+- 🤖 MCP servers (Model Context Protocol)
+- 📱 iOS Shortcuts and mobile apps
+- 🖥️ CLI tools
+- 🔧 Legacy systems and automation
+
+### Generating API Keys
+
+1. **Log in to KOauth dashboard**
+   ```
+   https://your-koauth-server.com/dashboard
+   ```
+
+2. **Navigate to API Keys**
+   - Click the "API Keys" button from your dashboard
+
+3. **Generate a new key**
+   - Click "New Key"
+   - Enter a descriptive name (e.g., "MCP Server", "iOS Shortcut")
+   - Click "Generate"
+   - **Copy the key immediately** - you won't see it again!
+
+### Using API Keys
+
+Include the API key in the `Authorization` header:
+
+```bash
+# Example: Fetch user info
+curl https://kura.tillmaessen.de/api/me \
+  -H "Authorization: Bearer koa_abc123_YOUR-API-KEY"
+```
+
+### API Key Format
+
+Keys have the format: `koa_PREFIX_SECRET`
+- **Prefix**: `koa_` (identifies the key type)
+- **Visible part**: 6-character prefix for display
+- **Secret part**: 32-character random string
+- **Example**: `koa_abc123_a1b2c3d4e5f67890a1b2c3d4e5f67890`
+
+### Security Best Practices
+
+✅ **DO:**
+- Store keys in environment variables
+- Use different keys for different applications
+- Revoke compromised keys immediately
+- Monitor "Last Used" timestamps to detect unauthorized access
+- Keep max 10 keys per user
+
+❌ **DON'T:**
+- Commit keys to git repositories
+- Share keys in plain text (Slack, email)
+- Log API keys
+- Hard-code keys in your source code
+
+### Validation Endpoint (For Service Integration)
+
+If you're building a service that needs to validate API keys (like KURA Notes), use the public validation endpoint:
+
+**Endpoint**: `POST /api/validate-key`
+
+**Request:**
+```json
+{
+  "apiKey": "koa_abc123_a1b2c3d4e5f67890a1b2c3d4e5f67890"
+}
+```
+
+**Response (Valid Key):**
+```json
+{
+  "valid": true,
+  "userId": "clh123456789",
+  "email": "user@example.com"
+}
+```
+
+**Response (Invalid Key):**
+```json
+{
+  "valid": false,
+  "error": "Invalid or revoked API key"
+}
+```
+
+**Rate Limit**: 100 requests/minute per IP
+
+### API Endpoints
+
+All endpoints require session authentication (except `/api/validate-key`):
+
+- **POST** `/api/me/api-keys` - Generate new API key
+- **GET** `/api/me/api-keys` - List all your API keys
+- **DELETE** `/api/me/api-keys/:id` - Revoke an API key
+
+See detailed API documentation in [`docs/API_KEYS.md`](./docs/API_KEYS.md)
+
 ## Project Structure
 
 ```
