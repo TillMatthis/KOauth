@@ -29,6 +29,7 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY prisma ./prisma
 COPY client ./client
+COPY scripts ./scripts
 
 # Install client dependencies
 RUN cd client && npm ci
@@ -55,6 +56,7 @@ COPY --from=builder --chown=koauth:nodejs /app/dist ./dist
 COPY --from=builder --chown=koauth:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=koauth:nodejs /app/package.json ./package.json
 COPY --from=builder --chown=koauth:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=koauth:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=koauth:nodejs /app/dist/client ./dist/client
 
 # Install OpenSSL for Prisma runtime and curl for health checks
