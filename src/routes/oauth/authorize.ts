@@ -84,13 +84,13 @@ export async function authorizeRoute(app: FastifyInstance) {
         })
       }
 
-      // Show consent screen
-      return reply.view('consent', {
-        client,
-        scopes: requestedScopes,
-        user,
-        params
+      // Redirect to React consent screen
+      const consentUrl = new URL('/oauth/consent', `${request.protocol}://${request.hostname}`)
+      // Preserve all query parameters
+      Object.entries(request.query as Record<string, string>).forEach(([key, value]) => {
+        consentUrl.searchParams.set(key, value)
       })
+      return reply.redirect(consentUrl.toString())
     } catch (error) {
       if (error instanceof z.ZodError) {
         return reply.status(400).send({

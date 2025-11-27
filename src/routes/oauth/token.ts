@@ -80,7 +80,7 @@ export async function tokenRoute(app: FastifyInstance) {
  * Handle authorization code grant
  */
 async function handleAuthorizationCodeGrant(
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
   body: {
     grant_type: 'authorization_code'
@@ -120,7 +120,7 @@ async function handleAuthorizationCodeGrant(
  * Handle refresh token grant
  */
 async function handleRefreshTokenGrant(
-  request: FastifyRequest,
+  _request: FastifyRequest,
   reply: FastifyReply,
   body: {
     grant_type: 'refresh_token'
