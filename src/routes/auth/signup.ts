@@ -91,7 +91,12 @@ export async function signupRoute(app: FastifyInstance) {
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.warn({ errors: error.errors }, 'Validation failed')
-        throw new ValidationError('Invalid input', error.flatten().fieldErrors as any)
+        return reply.code(400).send({
+          success: false,
+          error: 'Invalid input',
+          code: 'VALIDATION_ERROR',
+          fields: error.flatten().fieldErrors
+        })
       }
 
       if (error instanceof ConflictError) {
@@ -99,6 +104,15 @@ export async function signupRoute(app: FastifyInstance) {
           success: false,
           error: error.message,
           code: error.code
+        })
+      }
+
+      if (error instanceof ValidationError) {
+        return reply.code(error.statusCode).send({
+          success: false,
+          error: error.message,
+          code: error.code,
+          fields: error.fields
         })
       }
 
