@@ -77,7 +77,7 @@ export const Signup: React.FC = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.message || 'Signup failed')
+        setError(data.error || 'Signup failed')
         setIsLoading(false)
         return
       }
