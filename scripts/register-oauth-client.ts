@@ -5,8 +5,8 @@
  */
 
 import { randomBytes } from 'crypto'
-import { hashToken } from '../src/lib/auth/tokens'
-import { prisma } from '../src/lib/prisma'
+import { hashToken } from '../dist/lib/auth/tokens.js'
+import { prisma } from '../dist/lib/prisma.js'
 import * as readline from 'readline'
 
 const rl = readline.createInterface({
