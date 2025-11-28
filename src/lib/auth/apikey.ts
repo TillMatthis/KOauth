@@ -80,7 +80,9 @@ export async function createApiKey(
 export async function validateApiKey(apiKey: string): Promise<{ id: string; email: string } | null> {
   try {
     // Parse the API key format: koa_PREFIX_SECRET
-    const parts = apiKey.split('_')
+    // Note: SECRET is base64url encoded and may contain underscores,
+    // so we limit split to only the first 2 underscores
+    const parts = apiKey.split('_', 3)
     if (parts.length !== 3 || parts[0] !== 'koa') {
       return null
     }
