@@ -74,26 +74,23 @@ export const OAuthConsent: React.FC = () => {
     if (codeChallengeMethod) formData.append('code_challenge_method', codeChallengeMethod)
 
     try {
-      const response = await fetch('/oauth/authorize', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData.toString(),
-        credentials: 'include',
-        redirect: 'manual'
-      })
+      // Submit the form - the backend will redirect to the client app
+      // We don't use fetch here because we need the browser to follow the redirect
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = '/oauth/authorize'
 
-      // OAuth endpoint will redirect - follow it
-      if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 303) {
-        const location = response.headers.get('location')
-        if (location) {
-          window.location.href = location
-        }
-      } else {
-        setError('Authorization failed. Please try again.')
-        setApproving(false)
+      // Add all form fields
+      for (const [key, value] of formData.entries()) {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = key
+        input.value = value
+        form.appendChild(input)
       }
+
+      document.body.appendChild(form)
+      form.submit()
     } catch (err) {
       setError('Network error. Please try again.')
       setApproving(false)
