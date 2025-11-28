@@ -31,7 +31,7 @@ const deleteApiKeySchema = z.object({
 export async function apiKeyRoutes(app: FastifyInstance) {
   // POST /api/me/api-keys - Generate new API key
   app.post(
-    '/api/me/api-keys',
+    '/api-keys',
     {
       preHandler: authenticate
     },
@@ -101,7 +101,7 @@ export async function apiKeyRoutes(app: FastifyInstance) {
 
   // GET /api/me/api-keys - List all API keys
   app.get(
-    '/api/me/api-keys',
+    '/api-keys',
     {
       preHandler: authenticate
     },
@@ -135,7 +135,7 @@ export async function apiKeyRoutes(app: FastifyInstance) {
 
   // DELETE /api/me/api-keys/:id - Revoke an API key
   app.delete(
-    '/api/me/api-keys/:id',
+    '/api-keys/:id',
     {
       preHandler: authenticate
     },
