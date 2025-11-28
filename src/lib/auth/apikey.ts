@@ -80,14 +80,22 @@ export async function createApiKey(
 export async function validateApiKey(apiKey: string): Promise<{ id: string; email: string } | null> {
   try {
     // Parse the API key format: koa_PREFIX_SECRET
-    // Note: SECRET is base64url encoded and may contain underscores,
-    // so we limit split to only the first 2 underscores
-    const parts = apiKey.split('_', 3)
-    if (parts.length !== 3 || parts[0] !== 'koa') {
+    // PREFIX is always 6 chars (may contain underscores since it's base64url)
+    // SECRET is variable length (may contain underscores)
+    // Format: koa_ (4) + PREFIX (6) + _ (1) + SECRET (rest)
+    // Min length: 11 chars (koa_ + 6 + _)
+
+    if (!apiKey.startsWith('koa_') || apiKey.length < 11) {
       return null
     }
 
-    const prefix = parts[1]
+    // Extract the 6-char prefix (positions 4-9)
+    const prefix = apiKey.substring(4, 10)
+
+    // Verify separator at position 10
+    if (apiKey[10] !== '_') {
+      return null
+    }
 
     // Find API key by prefix
     const keyRecord = await prisma.userApiKey.findUnique({
