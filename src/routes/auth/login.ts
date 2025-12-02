@@ -76,12 +76,16 @@ export async function loginRoute(app: FastifyInstance) {
           expires: expiresAt
         })
 
-      // Generate JWT access token
+      // Generate JWT access token with RS256
+      const rsaKeys = (app as any).rsaKeys
+      const audience = (app as any).jwtAudience
       const accessToken = generateAccessToken(
         user.id,
         user.email,
-        app.config.JWT_SECRET,
-        app.config.JWT_EXPIRES_IN
+        rsaKeys,
+        app.config.JWT_EXPIRES_IN,
+        app.config.JWT_ISSUER,
+        audience
       )
 
       logger.info({ userId: user.id }, 'JWT access token generated')

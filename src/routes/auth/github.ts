@@ -126,12 +126,16 @@ export async function githubCallbackRoute(app: FastifyInstance) {
 
       logger.info({ userId: user.id, sessionId }, 'GitHub OAuth login successful')
 
-      // Generate JWT access token
+      // Generate JWT access token with RS256
+      const rsaKeys = (app as any).rsaKeys
+      const audience = (app as any).jwtAudience
       const jwtAccessToken = generateAccessToken(
         user.id,
         user.email,
-        app.config.JWT_SECRET,
-        app.config.JWT_EXPIRES_IN
+        rsaKeys,
+        app.config.JWT_EXPIRES_IN,
+        app.config.JWT_ISSUER,
+        audience
       )
 
       // Set HTTP-only cookies

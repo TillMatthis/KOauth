@@ -1,70 +1,99 @@
 /**
  * API Key management utilities
- * Handles generation, hashing, and validation of personal API keys
+ * Handles generation and validation of JWT-based API keys
  */
 
 import { randomBytes } from 'crypto'
-import { hashToken, verifyToken } from './tokens'
 import { prisma } from '../prisma'
 import type { UserApiKey } from '../../types/prisma'
-
-// API key configuration
-const PREFIX_LENGTH = 6 // Length of the visible prefix
-const KEY_LENGTH = 32 // Length of the secret part
+import { generateApiKeyToken, verifyAccessToken, type RsaKeyConfig } from './jwt'
 
 /**
- * Generate a new API key with format: koa_PREFIX_SECRET
- * @returns Object containing the full key, prefix, and hash
+ * Generate a new JWT-based API key
+ * @param userId - User ID to encode in token
+ * @param email - User email to encode in token
+ * @param rsaKeys - RSA key configuration for signing
+ * @param expiresInDays - Optional expiration in days (default: 90 days)
+ * @param issuer - Issuer URL (KOauth base URL)
+ * @param audience - Audience list (resource servers)
+ * @returns Object containing the JWT token and token ID (jti)
  */
-export async function generateApiKey() {
-  // Generate prefix (6 chars, base64url)
-  const prefix = randomBytes(PREFIX_LENGTH).toString('base64url').slice(0, PREFIX_LENGTH)
+export async function generateApiKey(
+  userId: string,
+  email: string,
+  rsaKeys: RsaKeyConfig,
+  expiresInDays: number = 90,
+  issuer?: string,
+  audience?: string[]
+) {
+  // Generate unique token ID (jti) for revocation tracking
+  const jti = randomBytes(16).toString('base64url')
 
-  // Generate secret part (32 bytes, base64url)
-  const secret = randomBytes(KEY_LENGTH).toString('base64url')
+  // Calculate expiration time
+  const expiresIn = expiresInDays > 0 ? `${expiresInDays}d` : '90d'
 
-  // Full key format: koa_PREFIX_SECRET
-  const fullKey = `koa_${prefix}_${secret}`
-
-  // Hash the full key for storage
-  const keyHash = await hashToken(fullKey)
+  // Generate JWT token
+  const fullKey = generateApiKeyToken(
+    userId,
+    email,
+    rsaKeys,
+    jti,
+    expiresIn,
+    issuer,
+    audience
+  )
 
   return {
     fullKey,
-    prefix,
-    keyHash
+    jti,
+    expiresInDays
   }
 }
 
 /**
- * Create a new API key for a user
+ * Create a new JWT-based API key for a user
  * @param userId - User ID to create key for
+ * @param email - User email
  * @param name - Friendly name for the key
- * @param expiresInDays - Optional expiration in days (0 = no expiration)
- * @returns Created API key record and the full key (only returned once)
+ * @param rsaKeys - RSA key configuration for signing
+ * @param expiresInDays - Optional expiration in days (default: 90 days)
+ * @param issuer - Issuer URL
+ * @param audience - Audience list
+ * @returns Created API key record and the full JWT token (only returned once)
  */
 export async function createApiKey(
   userId: string,
+  email: string,
   name: string,
-  expiresInDays?: number
+  rsaKeys: RsaKeyConfig,
+  expiresInDays: number = 90,
+  issuer?: string,
+  audience?: string[]
 ): Promise<{ apiKey: UserApiKey; fullKey: string }> {
-  // Generate the key
-  const { fullKey, prefix, keyHash } = await generateApiKey()
+  // Generate the JWT-based API key
+  const { fullKey, jti, expiresInDays: expDays } = await generateApiKey(
+    userId,
+    email,
+    rsaKeys,
+    expiresInDays,
+    issuer,
+    audience
+  )
 
-  // Calculate expiration date if specified
+  // Calculate expiration date
   let expiresAt: Date | null = null
-  if (expiresInDays && expiresInDays > 0) {
+  if (expDays > 0) {
     expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + expiresInDays)
+    expiresAt.setDate(expiresAt.getDate() + expDays)
   }
 
-  // Create in database
+  // Create in database (store jti for revocation tracking)
   const apiKey = await prisma.userApiKey.create({
     data: {
       userId,
       name,
-      prefix,
-      keyHash,
+      prefix: jti.substring(0, 8), // Use first 8 chars of jti as prefix for display
+      keyHash: jti, // Store jti instead of hash for JWT-based keys
       expiresAt
     }
   })
@@ -73,63 +102,64 @@ export async function createApiKey(
 }
 
 /**
- * Validate an API key and return the associated user
- * @param apiKey - Full API key to validate
+ * Validate a JWT-based API key and return the associated user
+ * @param apiKey - JWT token to validate
+ * @param rsaKeys - RSA key configuration for verification
+ * @param expectedIssuer - Optional expected issuer
+ * @param expectedAudience - Optional expected audience
  * @returns User data if valid, null otherwise
  */
-export async function validateApiKey(apiKey: string): Promise<{ id: string; email: string } | null> {
+export async function validateApiKey(
+  apiKey: string,
+  rsaKeys: RsaKeyConfig,
+  expectedIssuer?: string,
+  expectedAudience?: string[]
+): Promise<{ id: string; email: string } | null> {
   try {
-    // Parse the API key format: koa_PREFIX_SECRET
-    // PREFIX is always 6 chars (may contain underscores since it's base64url)
-    // SECRET is variable length (may contain underscores)
-    // Format: koa_ (4) + PREFIX (6) + _ (1) + SECRET (rest)
-    // Min length: 11 chars (koa_ + 6 + _)
+    // Verify the JWT token
+    const payload = verifyAccessToken(apiKey, rsaKeys, expectedAudience, expectedIssuer)
 
-    if (!apiKey.startsWith('koa_') || apiKey.length < 11) {
+    if (!payload) {
       return null
     }
 
-    // Extract the 6-char prefix (positions 4-9)
-    const prefix = apiKey.substring(4, 10)
-
-    // Verify separator at position 10
-    if (apiKey[10] !== '_') {
+    // Check if this is an API key token
+    if (payload.type !== 'api_key') {
       return null
     }
 
-    // Find API key by prefix
-    const keyRecord = await prisma.userApiKey.findUnique({
-      where: { prefix },
-      include: { user: true }
-    })
+    // Check if the key has been revoked
+    if (payload.jti) {
+      const keyRecord = await prisma.userApiKey.findFirst({
+        where: {
+          keyHash: payload.jti,
+          userId: payload.sub
+        },
+        include: { user: true }
+      })
 
-    if (!keyRecord) {
-      return null
+      if (!keyRecord) {
+        // Key has been revoked (not found in database)
+        return null
+      }
+
+      // Check if key has expired in database
+      if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
+        return null
+      }
+
+      // Update last used timestamp
+      await prisma.userApiKey.update({
+        where: { id: keyRecord.id },
+        data: { lastUsedAt: new Date() }
+      }).catch(() => {
+        // Ignore update errors (non-critical)
+      })
     }
-
-    // Check if key has expired
-    if (keyRecord.expiresAt && keyRecord.expiresAt < new Date()) {
-      return null
-    }
-
-    // Verify the key hash (timing-safe comparison)
-    const isValid = await verifyToken(keyRecord.keyHash, apiKey)
-
-    if (!isValid) {
-      return null
-    }
-
-    // Update last used timestamp
-    await prisma.userApiKey.update({
-      where: { id: keyRecord.id },
-      data: { lastUsedAt: new Date() }
-    }).catch(() => {
-      // Ignore update errors (non-critical)
-    })
 
     return {
-      id: keyRecord.user.id,
-      email: keyRecord.user.email
+      id: payload.sub,
+      email: payload.email
     }
   } catch (error) {
     return null

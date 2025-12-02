@@ -1,66 +1,203 @@
 /**
  * JWT utilities for short-lived access tokens
- * Uses jsonwebtoken for signing and verifying JWTs
+ * Uses RS256 (RSA) for JWT signing with asymmetric keys
  */
 
 import jwt, { SignOptions } from 'jsonwebtoken'
 
 /**
- * JWT payload structure
+ * JWT token types
+ */
+export type TokenType = 'access_token' | 'refresh_token' | 'api_key'
+
+/**
+ * JWT payload structure with enhanced claims
  */
 export interface JwtPayload {
-  sub: string      // User ID (subject)
-  email: string    // User email
-  iat?: number     // Issued at (added automatically)
-  exp?: number     // Expiration (added automatically)
+  sub: string           // User ID (subject)
+  email: string         // User email
+  iss?: string          // Issuer (KOauth base URL)
+  aud?: string[]        // Audience (resource servers)
+  type?: TokenType      // Token type
+  jti?: string          // JWT ID (for revocation)
+  iat?: number          // Issued at (added automatically)
+  exp?: number          // Expiration (added automatically)
 }
 
 /**
- * Generate a short-lived JWT access token
+ * RSA key configuration for JWT signing
+ */
+export interface RsaKeyConfig {
+  privateKey: string    // RSA private key (PEM format)
+  publicKey: string     // RSA public key (PEM format)
+  kid: string           // Key ID for JWT header
+}
+
+/**
+ * Generate a short-lived JWT access token using RS256
  * @param userId - User ID to encode in token
  * @param email - User email to encode in token
- * @param jwtSecret - Secret key for signing
+ * @param rsaKeys - RSA key configuration (private key, public key, kid)
  * @param expiresIn - Token expiration time (e.g., "15m", "1h")
+ * @param issuer - Issuer URL (KOauth base URL)
+ * @param audience - Audience list (resource servers)
  * @returns Signed JWT access token
  */
 export function generateAccessToken(
   userId: string,
   email: string,
-  jwtSecret: string,
-  expiresIn: string | number = '15m'
+  rsaKeys: RsaKeyConfig,
+  expiresIn: string | number = '15m',
+  issuer?: string,
+  audience?: string[]
 ): string {
   const payload: JwtPayload = {
     sub: userId,
-    email
+    email,
+    type: 'access_token'
   }
 
-  return jwt.sign(payload, jwtSecret, {
+  if (issuer) {
+    payload.iss = issuer
+  }
+
+  if (audience && audience.length > 0) {
+    payload.aud = audience
+  }
+
+  return jwt.sign(payload, rsaKeys.privateKey, {
     expiresIn: expiresIn as any,
-    algorithm: 'HS256'
+    algorithm: 'RS256',
+    keyid: rsaKeys.kid
   } as SignOptions)
 }
 
 /**
- * Verify and decode a JWT access token
+ * Generate a refresh token JWT using RS256
+ * @param userId - User ID to encode in token
+ * @param email - User email to encode in token
+ * @param rsaKeys - RSA key configuration
+ * @param tokenId - Unique token ID (jti) for revocation tracking
+ * @param expiresIn - Token expiration time (e.g., "7d", "30d")
+ * @param issuer - Issuer URL
+ * @param audience - Audience list
+ * @returns Signed refresh token JWT
+ */
+export function generateRefreshToken(
+  userId: string,
+  email: string,
+  rsaKeys: RsaKeyConfig,
+  tokenId: string,
+  expiresIn: string | number = '30d',
+  issuer?: string,
+  audience?: string[]
+): string {
+  const payload: JwtPayload = {
+    sub: userId,
+    email,
+    type: 'refresh_token',
+    jti: tokenId
+  }
+
+  if (issuer) {
+    payload.iss = issuer
+  }
+
+  if (audience && audience.length > 0) {
+    payload.aud = audience
+  }
+
+  return jwt.sign(payload, rsaKeys.privateKey, {
+    expiresIn: expiresIn as any,
+    algorithm: 'RS256',
+    keyid: rsaKeys.kid
+  } as SignOptions)
+}
+
+/**
+ * Generate an API key JWT using RS256
+ * @param userId - User ID to encode in token
+ * @param email - User email to encode in token
+ * @param rsaKeys - RSA key configuration
+ * @param tokenId - Unique token ID (jti) for revocation tracking
+ * @param expiresIn - Token expiration time (default: 90 days)
+ * @param issuer - Issuer URL
+ * @param audience - Audience list
+ * @returns Signed API key JWT
+ */
+export function generateApiKeyToken(
+  userId: string,
+  email: string,
+  rsaKeys: RsaKeyConfig,
+  tokenId: string,
+  expiresIn: string | number = '90d',
+  issuer?: string,
+  audience?: string[]
+): string {
+  const payload: JwtPayload = {
+    sub: userId,
+    email,
+    type: 'api_key',
+    jti: tokenId
+  }
+
+  if (issuer) {
+    payload.iss = issuer
+  }
+
+  if (audience && audience.length > 0) {
+    payload.aud = audience
+  }
+
+  return jwt.sign(payload, rsaKeys.privateKey, {
+    expiresIn: expiresIn as any,
+    algorithm: 'RS256',
+    keyid: rsaKeys.kid
+  } as SignOptions)
+}
+
+/**
+ * Verify and decode a JWT token using RS256
  * @param token - JWT token to verify
- * @param jwtSecret - Secret key for verification
+ * @param rsaKeys - RSA key configuration (public key for verification)
+ * @param expectedAudience - Optional expected audience to validate
+ * @param expectedIssuer - Optional expected issuer to validate
  * @returns Decoded payload if valid, null otherwise
  */
 export function verifyAccessToken(
   token: string,
-  jwtSecret: string
+  rsaKeys: RsaKeyConfig,
+  expectedAudience?: string[],
+  expectedIssuer?: string
 ): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, jwtSecret, {
-      algorithms: ['HS256']
-    }) as JwtPayload
+    const options: any = {
+      algorithms: ['RS256']
+    }
 
-    // Ensure required fields are present
-    if (!decoded.sub || !decoded.email) {
+    if (expectedAudience && expectedAudience.length > 0) {
+      options.audience = expectedAudience
+    }
+
+    if (expectedIssuer) {
+      options.issuer = expectedIssuer
+    }
+
+    const decoded = jwt.verify(token, rsaKeys.publicKey, options)
+
+    // Type guard to ensure it's a JwtPayload
+    if (typeof decoded === 'string' || !decoded || typeof decoded !== 'object') {
       return null
     }
 
-    return decoded
+    const payload = decoded as unknown as JwtPayload
+
+    // Ensure required fields are present
+    if (!payload.sub || !payload.email) {
+      return null
+    }
+
+    return payload
   } catch (error) {
     // Token is invalid, expired, or malformed
     return null
