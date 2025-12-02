@@ -37,7 +37,8 @@ export const envSchema = {
       type: 'string'
     },
     JWT_SECRET: {
-      type: 'string'
+      type: 'string',
+      default: '' // Optional now, RSA keys used for RS256
     },
     JWT_EXPIRES_IN: {
       type: 'string',
@@ -46,6 +47,26 @@ export const envSchema = {
     REFRESH_TOKEN_EXPIRES_IN: {
       type: 'string',
       default: '7d'
+    },
+    JWT_ISSUER: {
+      type: 'string',
+      default: 'https://auth.tillmaessen.de'
+    },
+    JWT_AUDIENCE: {
+      type: 'string',
+      default: 'https://auth.tillmaessen.de'
+    },
+    JWT_PRIVATE_KEY: {
+      type: 'string',
+      default: '' // Base64-encoded RSA private key (optional, will generate if not provided)
+    },
+    JWT_PUBLIC_KEY: {
+      type: 'string',
+      default: '' // Base64-encoded RSA public key (optional, will generate if not provided)
+    },
+    JWT_KEY_ID: {
+      type: 'string',
+      default: '' // Key ID for JWKS (optional, will generate if not provided)
     },
 
     // OAuth Providers (optional for now)
@@ -104,6 +125,11 @@ declare module 'fastify' {
       JWT_SECRET: string
       JWT_EXPIRES_IN: string
       REFRESH_TOKEN_EXPIRES_IN: string
+      JWT_ISSUER: string
+      JWT_AUDIENCE: string
+      JWT_PRIVATE_KEY: string
+      JWT_PUBLIC_KEY: string
+      JWT_KEY_ID: string
       GOOGLE_CLIENT_ID: string
       GOOGLE_CLIENT_SECRET: string
       GOOGLE_REDIRECT_URI: string

@@ -215,10 +215,13 @@ export async function exchangeAuthorizationCode(params: {
     return null
   }
 
-  // Generate access token (JWT)
-  const jwtSecret = process.env.JWT_SECRET || 'default-secret'
+  // Generate access token (JWT) with RS256
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '15m'
-  const accessToken = generateAccessToken(user.id, user.email, jwtSecret, jwtExpiresIn)
+  const accessToken = generateAccessToken(user.id, user.email, {
+    expiresIn: jwtExpiresIn,
+    clientId: params.clientId,
+    scope: authCode.scopes
+  })
 
   // Generate refresh token
   const refreshTokenValue = generateRefreshToken()
@@ -294,10 +297,13 @@ export async function refreshAccessToken(params: {
     return null
   }
 
-  // Generate new access token
-  const jwtSecret = process.env.JWT_SECRET || 'default-secret'
+  // Generate new access token with RS256
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '15m'
-  const accessToken = generateAccessToken(user.id, user.email, jwtSecret, jwtExpiresIn)
+  const accessToken = generateAccessToken(user.id, user.email, {
+    expiresIn: jwtExpiresIn,
+    clientId: storedToken.clientId,
+    scope: storedToken.scopes
+  })
 
   // Generate new refresh token (token rotation)
   const newRefreshTokenValue = generateRefreshToken()

@@ -12,6 +12,7 @@ import fastifyRateLimit from '@fastify/rate-limit'
 import fastifyFormbody from '@fastify/formbody'
 import { envSchema } from './config/env'
 import { fastifyLogger } from './lib/logger'
+import { rsaKeyManager } from './lib/auth/rsa-keys'
 
 /**
  * Build and configure the Fastify application
@@ -33,6 +34,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     schema: envSchema,
     dotenv: true
   })
+
+  // Initialize RSA keys for JWT RS256 signing
+  await rsaKeyManager.initialize()
+  app.log.info('RSA keys initialized for JWT RS256 signing')
 
   // Security plugins
   await app.register(fastifyHelmet, {
@@ -114,6 +119,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   // Register public API key validation endpoint (no auth required)
   const { validateKeyRoute } = await import('./routes/validate-key')
   await validateKeyRoute(app)
+
+  // Register .well-known endpoints (JWKS and OAuth discovery)
+  const { registerWellKnownRoutes } = await import('./routes/well-known')
+  await registerWellKnownRoutes(app)
 
   // Register /api/me routes with rate limiting
   await app.register(async (apiScope) => {

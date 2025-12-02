@@ -36,17 +36,14 @@ export async function authenticate(
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
-    // Try to verify as JWT access token first
-    const jwtSecret = (request.server as any).config.JWT_SECRET
-    if (jwtSecret) {
-      const jwtPayload = verifyAccessToken(token, jwtSecret)
-      if (jwtPayload) {
-        request.user = {
-          id: jwtPayload.sub,
-          email: jwtPayload.email
-        }
-        return
+    // Try to verify as JWT access token first (RS256)
+    const jwtPayload = verifyAccessToken(token)
+    if (jwtPayload) {
+      request.user = {
+        id: jwtPayload.sub,
+        email: jwtPayload.email || ''
       }
+      return
     }
 
     // If not a valid JWT, try to validate as API key
@@ -96,17 +93,14 @@ export async function optionalAuthenticate(
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7)
 
-    // Try JWT first
-    const jwtSecret = (request.server as any).config.JWT_SECRET
-    if (jwtSecret) {
-      const jwtPayload = verifyAccessToken(token, jwtSecret)
-      if (jwtPayload) {
-        request.user = {
-          id: jwtPayload.sub,
-          email: jwtPayload.email
-        }
-        return
+    // Try JWT first (RS256)
+    const jwtPayload = verifyAccessToken(token)
+    if (jwtPayload) {
+      request.user = {
+        id: jwtPayload.sub,
+        email: jwtPayload.email || ''
       }
+      return
     }
 
     // Try API key

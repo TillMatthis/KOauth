@@ -1,12 +1,14 @@
 /**
  * JWT Bearer Strategy Tests (Task 1.5)
  * Tests for short-lived JWT access tokens and Bearer token authentication
+ * Updated for RS256 signing
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { build } from '../app'
 import type { FastifyInstance } from 'fastify'
 import jwt from 'jsonwebtoken'
+import { rsaKeyManager } from '../lib/auth/rsa-keys'
 
 describe('JWT Bearer Strategy (Task 1.5)', () => {
   let app: FastifyInstance
@@ -76,19 +78,19 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
       sessionCookie = `${sessionCookieObj!.name}=${sessionCookieObj!.value}`
     })
 
-    it('should verify JWT signature correctly', async () => {
-      const jwtSecret = app.config.JWT_SECRET
+    it('should verify JWT signature correctly with RS256', async () => {
+      const publicKey = rsaKeyManager.getPublicKey()
       expect(() => {
-        jwt.verify(validAccessToken, jwtSecret)
+        jwt.verify(validAccessToken, publicKey, { algorithms: ['RS256'] })
       }).not.toThrow()
     })
 
     it('should reject tampered JWT', async () => {
-      const jwtSecret = app.config.JWT_SECRET
+      const publicKey = rsaKeyManager.getPublicKey()
       const tamperedToken = validAccessToken.slice(0, -10) + 'TAMPERED123'
 
       expect(() => {
-        jwt.verify(tamperedToken, jwtSecret)
+        jwt.verify(tamperedToken, publicKey, { algorithms: ['RS256'] })
       }).toThrow()
     })
   })
@@ -155,10 +157,18 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
 
     it('should reject expired JWT token', async () => {
       // Create an expired token (1 second expiry, already expired)
+      const privateKey = rsaKeyManager.getPrivateKey()
+      const kid = rsaKeyManager.getKeyId()
       const expiredToken = jwt.sign(
         { sub: testUserId, email: testUserEmail },
-        app.config.JWT_SECRET,
-        { expiresIn: '-1s' } // Negative time = already expired
+        privateKey,
+        {
+          expiresIn: '-1s', // Negative time = already expired
+          algorithm: 'RS256',
+          keyid: kid,
+          issuer: 'https://auth.tillmaessen.de',
+          audience: 'https://auth.tillmaessen.de'
+        }
       )
 
       const response = await app.inject({
@@ -192,11 +202,24 @@ describe('JWT Bearer Strategy (Task 1.5)', () => {
       expect(data.error).toContain('Invalid or expired token')
     })
 
-    it('should reject JWT with invalid signature (wrong secret)', async () => {
+    it('should reject JWT with invalid signature (wrong key)', async () => {
+      // Create a token with a different private key
+      const crypto = await import('crypto')
+      const { privateKey: wrongPrivateKey } = crypto.generateKeyPairSync('rsa', {
+        modulusLength: 2048,
+        publicKeyEncoding: { type: 'spki', format: 'pem' },
+        privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+      })
+
       const invalidToken = jwt.sign(
         { sub: testUserId, email: testUserEmail },
-        'wrong-secret-key-12345',
-        { expiresIn: '15m' }
+        wrongPrivateKey,
+        {
+          expiresIn: '15m',
+          algorithm: 'RS256',
+          issuer: 'https://auth.tillmaessen.de',
+          audience: 'https://auth.tillmaessen.de'
+        }
       )
 
       const response = await app.inject({

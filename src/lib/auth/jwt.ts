@@ -1,62 +1,95 @@
 /**
  * JWT utilities for short-lived access tokens
- * Uses jsonwebtoken for signing and verifying JWTs
+ * Uses jsonwebtoken for signing and verifying JWTs with RS256
  */
 
 import jwt, { SignOptions } from 'jsonwebtoken'
+import { rsaKeyManager } from './rsa-keys'
 
 /**
- * JWT payload structure
+ * JWT payload structure (OAuth 2.0 + OpenID Connect compatible)
  */
 export interface JwtPayload {
-  sub: string      // User ID (subject)
-  email: string    // User email
-  iat?: number     // Issued at (added automatically)
-  exp?: number     // Expiration (added automatically)
+  sub: string           // User ID (subject)
+  email?: string        // User email (optional, for backward compatibility)
+  client_id?: string    // OAuth client ID
+  scope?: string        // Space-separated scopes
+  iss?: string          // Issuer
+  aud?: string | string[] // Audience
+  iat?: number          // Issued at (added automatically)
+  exp?: number          // Expiration (added automatically)
 }
 
 /**
- * Generate a short-lived JWT access token
+ * Generate a short-lived JWT access token with RS256 signing
  * @param userId - User ID to encode in token
- * @param email - User email to encode in token
- * @param jwtSecret - Secret key for signing
- * @param expiresIn - Token expiration time (e.g., "15m", "1h")
+ * @param email - User email to encode in token (optional)
+ * @param options - Additional token options
  * @returns Signed JWT access token
  */
 export function generateAccessToken(
   userId: string,
-  email: string,
-  jwtSecret: string,
-  expiresIn: string | number = '15m'
+  email?: string,
+  options?: {
+    expiresIn?: string | number
+    clientId?: string
+    scope?: string | string[]
+    issuer?: string
+    audience?: string | string[]
+  }
 ): string {
+  const expiresIn = options?.expiresIn || '15m'
+  const issuer = options?.issuer || process.env.JWT_ISSUER || 'https://auth.tillmaessen.de'
+  const audience = options?.audience || process.env.JWT_AUDIENCE || 'https://auth.tillmaessen.de'
+
   const payload: JwtPayload = {
     sub: userId,
-    email
+    ...(email && { email }),
+    ...(options?.clientId && { client_id: options.clientId }),
+    ...(options?.scope && {
+      scope: Array.isArray(options.scope) ? options.scope.join(' ') : options.scope
+    })
   }
 
-  return jwt.sign(payload, jwtSecret, {
+  const privateKey = rsaKeyManager.getPrivateKey()
+  const kid = rsaKeyManager.getKeyId()
+
+  return jwt.sign(payload, privateKey, {
     expiresIn: expiresIn as any,
-    algorithm: 'HS256'
+    algorithm: 'RS256',
+    issuer,
+    audience,
+    keyid: kid
   } as SignOptions)
 }
 
 /**
- * Verify and decode a JWT access token
+ * Verify and decode a JWT access token with RS256
  * @param token - JWT token to verify
- * @param jwtSecret - Secret key for verification
+ * @param options - Verification options
  * @returns Decoded payload if valid, null otherwise
  */
 export function verifyAccessToken(
   token: string,
-  jwtSecret: string
+  options?: {
+    issuer?: string
+    audience?: string | string[]
+  }
 ): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, jwtSecret, {
-      algorithms: ['HS256']
+    const issuer = options?.issuer || process.env.JWT_ISSUER || 'https://auth.tillmaessen.de'
+    const audience = options?.audience || process.env.JWT_AUDIENCE || 'https://auth.tillmaessen.de'
+
+    const publicKey = rsaKeyManager.getPublicKey()
+
+    const decoded = jwt.verify(token, publicKey, {
+      algorithms: ['RS256'],
+      issuer,
+      audience
     }) as JwtPayload
 
     // Ensure required fields are present
-    if (!decoded.sub || !decoded.email) {
+    if (!decoded.sub) {
       return null
     }
 
