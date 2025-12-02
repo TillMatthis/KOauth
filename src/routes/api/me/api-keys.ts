@@ -54,11 +54,17 @@ export async function apiKeyRoutes(app: FastifyInstance) {
           })
         }
 
-        // Create the API key
+        // Create the JWT-based API key
+        const rsaKeys = (app as any).rsaKeys
+        const audience = (app as any).jwtAudience
         const { apiKey, fullKey } = await createApiKey(
           user.id,
+          user.email,
           body.name,
-          body.expiresInDays
+          rsaKeys,
+          body.expiresInDays || 90,
+          app.config.JWT_ISSUER,
+          audience
         )
 
         // Log the creation

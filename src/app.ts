@@ -12,6 +12,8 @@ import fastifyRateLimit from '@fastify/rate-limit'
 import fastifyFormbody from '@fastify/formbody'
 import { envSchema } from './config/env'
 import { fastifyLogger } from './lib/logger'
+import { initializeKeys } from './config/keys'
+import { resolve } from 'path'
 
 /**
  * Build and configure the Fastify application
@@ -33,6 +35,20 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     schema: envSchema,
     dotenv: true
   })
+
+  // Initialize RSA keys for JWT signing (RS256)
+  const privateKeyPath = resolve(app.config.JWT_PRIVATE_KEY_PATH)
+  const publicKeyPath = resolve(app.config.JWT_PUBLIC_KEY_PATH)
+  const rsaKeys = initializeKeys(privateKeyPath, publicKeyPath)
+
+  // Store RSA keys in app context for use in routes
+  ;(app as any).rsaKeys = rsaKeys
+
+  // Parse audience list from config
+  const audienceList = app.config.JWT_AUDIENCE
+    ? app.config.JWT_AUDIENCE.split(',').map(s => s.trim())
+    : []
+  ;(app as any).jwtAudience = audienceList
 
   // Security plugins
   await app.register(fastifyHelmet, {
@@ -114,6 +130,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   // Register public API key validation endpoint (no auth required)
   const { validateKeyRoute } = await import('./routes/validate-key')
   await validateKeyRoute(app)
+
+  // Register JWKS endpoint (/.well-known/jwks.json)
+  const { jwksRoute } = await import('./routes/jwks')
+  await jwksRoute(app)
 
   // Register /api/me routes with rate limiting
   await app.register(async (apiScope) => {

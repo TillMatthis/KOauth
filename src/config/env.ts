@@ -36,8 +36,15 @@ export const envSchema = {
     SESSION_SECRET: {
       type: 'string'
     },
-    JWT_SECRET: {
-      type: 'string'
+
+    // JWT Configuration (RS256)
+    JWT_PRIVATE_KEY_PATH: {
+      type: 'string',
+      default: './keys/jwt-private.pem'
+    },
+    JWT_PUBLIC_KEY_PATH: {
+      type: 'string',
+      default: './keys/jwt-public.pem'
     },
     JWT_EXPIRES_IN: {
       type: 'string',
@@ -45,7 +52,15 @@ export const envSchema = {
     },
     REFRESH_TOKEN_EXPIRES_IN: {
       type: 'string',
-      default: '7d'
+      default: '30d'
+    },
+    JWT_ISSUER: {
+      type: 'string',
+      default: 'http://localhost:3000'
+    },
+    JWT_AUDIENCE: {
+      type: 'string',
+      default: 'kura-notes,komcp'
     },
 
     // OAuth Providers (optional for now)
@@ -101,9 +116,12 @@ declare module 'fastify' {
       LOG_LEVEL: string
       DATABASE_URL: string
       SESSION_SECRET: string
-      JWT_SECRET: string
+      JWT_PRIVATE_KEY_PATH: string
+      JWT_PUBLIC_KEY_PATH: string
       JWT_EXPIRES_IN: string
       REFRESH_TOKEN_EXPIRES_IN: string
+      JWT_ISSUER: string
+      JWT_AUDIENCE: string
       GOOGLE_CLIENT_ID: string
       GOOGLE_CLIENT_SECRET: string
       GOOGLE_REDIRECT_URI: string

@@ -34,8 +34,11 @@ export async function validateKeyRoute(app: FastifyInstance) {
         // Validate request body
         const body = validateKeySchema.parse(request.body)
 
-        // Validate the API key
-        const user = await validateApiKey(body.apiKey)
+        // Validate the JWT-based API key
+        const rsaKeys = (app as any).rsaKeys
+        const issuer = app.config.JWT_ISSUER
+        const audience = (app as any).jwtAudience
+        const user = await validateApiKey(body.apiKey, rsaKeys, issuer, audience)
 
         if (!user) {
           // Invalid or revoked key

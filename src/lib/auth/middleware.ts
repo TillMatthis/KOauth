@@ -37,9 +37,12 @@ export async function authenticate(
     const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
     // Try to verify as JWT access token first
-    const jwtSecret = (request.server as any).config.JWT_SECRET
-    if (jwtSecret) {
-      const jwtPayload = verifyAccessToken(token, jwtSecret)
+    const rsaKeys = (request.server as any).rsaKeys
+    const issuer = (request.server as any).config.JWT_ISSUER
+    const audience = (request.server as any).jwtAudience
+
+    if (rsaKeys) {
+      const jwtPayload = verifyAccessToken(token, rsaKeys, audience, issuer)
       if (jwtPayload) {
         request.user = {
           id: jwtPayload.sub,
@@ -50,7 +53,7 @@ export async function authenticate(
     }
 
     // If not a valid JWT, try to validate as API key
-    const user = await validateApiKey(token)
+    const user = await validateApiKey(token, rsaKeys, issuer, audience)
     if (user) {
       request.user = user
       return
@@ -97,9 +100,12 @@ export async function optionalAuthenticate(
     const token = authHeader.substring(7)
 
     // Try JWT first
-    const jwtSecret = (request.server as any).config.JWT_SECRET
-    if (jwtSecret) {
-      const jwtPayload = verifyAccessToken(token, jwtSecret)
+    const rsaKeys = (request.server as any).rsaKeys
+    const issuer = (request.server as any).config.JWT_ISSUER
+    const audience = (request.server as any).jwtAudience
+
+    if (rsaKeys) {
+      const jwtPayload = verifyAccessToken(token, rsaKeys, audience, issuer)
       if (jwtPayload) {
         request.user = {
           id: jwtPayload.sub,
@@ -110,7 +116,7 @@ export async function optionalAuthenticate(
     }
 
     // Try API key
-    const user = await validateApiKey(token)
+    const user = await validateApiKey(token, rsaKeys, issuer, audience)
     if (user) {
       request.user = user
       return

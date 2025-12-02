@@ -80,7 +80,7 @@ export async function tokenRoute(app: FastifyInstance) {
  * Handle authorization code grant
  */
 async function handleAuthorizationCodeGrant(
-  _request: FastifyRequest,
+  request: FastifyRequest,
   reply: FastifyReply,
   body: {
     grant_type: 'authorization_code'
@@ -91,11 +91,19 @@ async function handleAuthorizationCodeGrant(
     code_verifier?: string
   }
 ) {
+  const app = request.server
+  const rsaKeys = (app as any).rsaKeys
+  const audience = (app as any).jwtAudience
+
   const result = await exchangeAuthorizationCode({
     code: body.code,
     clientId: body.client_id,
     redirectUri: body.redirect_uri,
-    codeVerifier: body.code_verifier
+    codeVerifier: body.code_verifier,
+    rsaKeys,
+    jwtExpiresIn: app.config.JWT_EXPIRES_IN,
+    issuer: app.config.JWT_ISSUER,
+    audience
   })
 
   if (!result) {
@@ -120,7 +128,7 @@ async function handleAuthorizationCodeGrant(
  * Handle refresh token grant
  */
 async function handleRefreshTokenGrant(
-  _request: FastifyRequest,
+  request: FastifyRequest,
   reply: FastifyReply,
   body: {
     grant_type: 'refresh_token'
@@ -129,9 +137,17 @@ async function handleRefreshTokenGrant(
     client_secret: string
   }
 ) {
+  const app = request.server
+  const rsaKeys = (app as any).rsaKeys
+  const audience = (app as any).jwtAudience
+
   const result = await refreshAccessToken({
     refreshToken: body.refresh_token,
-    clientId: body.client_id
+    clientId: body.client_id,
+    rsaKeys,
+    jwtExpiresIn: app.config.JWT_EXPIRES_IN,
+    issuer: app.config.JWT_ISSUER,
+    audience
   })
 
   if (!result) {

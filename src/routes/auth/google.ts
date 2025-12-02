@@ -127,12 +127,16 @@ export async function googleCallbackRoute(app: FastifyInstance) {
 
       logger.info({ userId: user.id, sessionId }, 'Google OAuth login successful')
 
-      // Generate JWT access token
+      // Generate JWT access token with RS256
+      const rsaKeys = (app as any).rsaKeys
+      const audience = (app as any).jwtAudience
       const jwtToken = generateAccessToken(
         user.id,
         user.email,
-        app.config.JWT_SECRET,
-        app.config.JWT_EXPIRES_IN
+        rsaKeys,
+        app.config.JWT_EXPIRES_IN,
+        app.config.JWT_ISSUER,
+        audience
       )
 
       // Set HTTP-only cookies
