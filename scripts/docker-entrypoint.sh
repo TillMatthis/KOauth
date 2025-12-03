@@ -1,32 +1,28 @@
 #!/bin/sh
 # Docker entrypoint script for KOauth
-# Ensures the keys directory (volume mount) is writable
+# Fixes volume permissions and switches to non-root user
 
 set -e
 
 echo "[Entrypoint] Starting KOauth initialization..."
-echo "[Entrypoint] Running as user: $(whoami) (UID: $(id -u), GID: $(id -g))"
+echo "[Entrypoint] Running as: $(whoami) (UID: $(id -u), GID: $(id -g))"
 
-# The /app/keys directory is mounted as a Docker volume
-# Verify it's accessible and writable
+# Ensure /app/keys directory exists (Docker volume mount point)
 if [ ! -d "/app/keys" ]; then
-    echo "[Entrypoint] ⚠ /app/keys directory not found, creating it..."
-    mkdir -p /app/keys || {
-        echo "[Entrypoint] ✗ ERROR: Cannot create /app/keys directory"
-        exit 1
-    }
+    echo "[Entrypoint] Creating /app/keys directory..."
+    mkdir -p /app/keys
 fi
 
-if [ ! -w "/app/keys" ]; then
-    echo "[Entrypoint] ✗ ERROR: /app/keys is not writable"
-    echo "[Entrypoint] Directory permissions:"
-    ls -la /app | grep -E "(keys|total)"
-    exit 1
-fi
+# Fix ownership of /app/keys for the koauth user
+# This is necessary because Docker volumes are often created with root ownership
+echo "[Entrypoint] Ensuring correct ownership of /app/keys..."
+chown -R koauth:nodejs /app/keys
+chmod 755 /app/keys
 
-echo "[Entrypoint] ✓ /app/keys is ready (writable)"
-echo "[Entrypoint] Initialization complete"
+echo "[Entrypoint] ✓ /app/keys is ready (owned by koauth:nodejs)"
+echo "[Entrypoint] Switching to koauth user and starting application..."
 echo ""
 
-# Execute the command passed to the entrypoint
-exec "$@"
+# Switch to koauth user and execute the command
+# Using 'su -s' to run the command as the koauth user
+exec su -s /bin/sh koauth -c "exec $*"
