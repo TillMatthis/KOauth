@@ -46,6 +46,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
     ports:
       - "${PORT:-3000}:3000"
+    volumes:
+      - koauth_keys:/app/keys
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -76,6 +78,8 @@ services:
 
 volumes:
   postgres_data:
+    driver: local
+  koauth_keys:
     driver: local
 
 networks:
