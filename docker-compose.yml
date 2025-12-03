@@ -32,18 +32,21 @@ services:
       target: production
     container_name: koauth-app
     restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
+    # Note: Remove postgres dependency if using SQLite (NODE_ENV=development)
+    # depends_on:
+    #   postgres:
+    #     condition: service_healthy
     env_file:
       - .env  # Load all variables from .env file into container
     environment:
-      # Override specific values for Docker environment
-      # The app inside container always listens on port 3000
+      # Override only Docker-specific values, DATABASE_URL comes from .env
       PORT: 3000
       HOST: 0.0.0.0
-      # DATABASE_URL points to the postgres container instead of localhost
-      DATABASE_URL: ${DATABASE_URL:-postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public}
+    volumes:
+      # Volume for SQLite database (only needed if using DATABASE_URL=file:/data/db/koauth.db)
+      - ./data/db:/data/db
+      # Volume for RSA keys persistence
+      - ./keys:/app/keys
     ports:
       # Map host port (from .env) to container port 3000
       - "${HOST_PORT:-3002}:3000"
