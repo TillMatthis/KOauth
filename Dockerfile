@@ -42,14 +42,19 @@ RUN npm run build
 
 # Stage 3: Production
 FROM node:20-alpine AS production
-WORKDIR /app
 
 # Set environment to production
 ENV NODE_ENV=production
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 koauth
+    adduser --system --uid 1001 koauth && \
+    mkdir -p /app && \
+    chown koauth:nodejs /app && \
+    chmod 755 /app
+
+# Set working directory (now owned by koauth)
+WORKDIR /app
 
 # Copy necessary files from builder
 COPY --from=builder --chown=koauth:nodejs /app/dist ./dist
@@ -62,9 +67,9 @@ COPY --from=builder --chown=koauth:nodejs /app/dist/client ./dist/client
 # Install OpenSSL for Prisma runtime and curl for health checks
 RUN apk add --no-cache openssl curl
 
-# Ensure /app directory and all subdirectories are owned by koauth user
-# This allows the application to create directories like /app/keys at runtime
-RUN chown -R koauth:nodejs /app
+# Copy entrypoint script
+COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Switch to non-root user
 USER koauth
@@ -75,6 +80,9 @@ EXPOSE 3000
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
+
+# Set entrypoint to handle initialization
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application
 CMD ["node", "dist/server.js"]
