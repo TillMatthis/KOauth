@@ -255,26 +255,51 @@ export function pemToJwks(publicKey: string, kid: string): JwksKey {
 
 /**
  * Initialize RSA keys for JWT signing
- * Auto-generates keys if they don't exist
- * @param privateKeyPath - Path to private key file
- * @param publicKeyPath - Path to public key file
+ * Priority: 1) Environment variables, 2) Existing files, 3) Generate new
+ * @param privateKeyPath - Path to private key file (fallback)
+ * @param publicKeyPath - Path to public key file (fallback)
+ * @param privateKeyEnv - Private key from environment variable (optional)
+ * @param publicKeyEnv - Public key from environment variable (optional)
  * @returns Loaded or generated RSA key pair
  */
 export function initializeKeys(
   privateKeyPath: string,
-  publicKeyPath: string
+  publicKeyPath: string,
+  privateKeyEnv?: string,
+  publicKeyEnv?: string
 ): RsaKeyPair {
   console.log('[Keys] Initializing RSA keys for JWT signing...')
 
-  // Check if keys exist
+  // Option 1: Load from environment variables (recommended for Docker)
+  if (privateKeyEnv && publicKeyEnv) {
+    console.log('[Keys] Loading RSA keys from environment variables...')
+    try {
+      // Decode base64 if needed (keys might be base64 encoded in env vars)
+      const privateKey = privateKeyEnv.includes('-----BEGIN')
+        ? privateKeyEnv
+        : Buffer.from(privateKeyEnv, 'base64').toString('utf8')
+      const publicKey = publicKeyEnv.includes('-----BEGIN')
+        ? publicKeyEnv
+        : Buffer.from(publicKeyEnv, 'base64').toString('utf8')
+
+      const kid = `koauth-env-${Date.now()}`
+      console.log(`[Keys] RSA keys loaded from environment (kid: ${kid})`)
+      return { privateKey, publicKey, kid }
+    } catch (error) {
+      console.error('[Keys] Failed to load keys from environment:', error)
+      console.log('[Keys] Falling back to file-based keys...')
+    }
+  }
+
+  // Option 2: Load from existing files
   const privateExists = existsSync(privateKeyPath)
   const publicExists = existsSync(publicKeyPath)
 
   if (privateExists && publicExists) {
-    console.log('[Keys] Loading existing RSA keys...')
+    console.log('[Keys] Loading existing RSA keys from files...')
     try {
       const keyPair = loadKeyPair(privateKeyPath, publicKeyPath)
-      console.log(`[Keys] RSA keys loaded successfully (kid: ${keyPair.kid})`)
+      console.log(`[Keys] RSA keys loaded from files (kid: ${keyPair.kid})`)
       return keyPair
     } catch (error) {
       console.error('[Keys] Failed to load existing keys:', error)
@@ -282,14 +307,19 @@ export function initializeKeys(
     }
   }
 
-  // Generate new keys
+  // Option 3: Generate new keys and save to disk
   console.log('[Keys] Generating new RSA 2048-bit key pair...')
   const keyPair = generateRsaKeyPair()
 
-  // Save keys to disk
-  saveKeyPair(keyPair, privateKeyPath, publicKeyPath)
+  try {
+    // Save keys to disk (this may fail in restrictive environments)
+    saveKeyPair(keyPair, privateKeyPath, publicKeyPath)
+    console.log(`[Keys] RSA keys generated and saved (kid: ${keyPair.kid})`)
+  } catch (error) {
+    console.warn('[Keys] Could not save keys to disk:', error)
+    console.log('[Keys] Using in-memory keys (will not persist across restarts)')
+  }
 
-  console.log(`[Keys] RSA keys initialized successfully (kid: ${keyPair.kid})`)
   return keyPair
 }
 

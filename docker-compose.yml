@@ -44,10 +44,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Optional: Provide RSA keys as environment variables (base64 or PEM format)
+      # JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
+      # JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
     ports:
       - "${PORT:-3000}:3000"
-    volumes:
-      - koauth_keys:/app/keys
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
@@ -78,8 +79,6 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  koauth_keys:
     driver: local
 
 networks:

@@ -38,6 +38,16 @@ export const envSchema = {
     },
 
     // JWT Configuration (RS256)
+    // Option 1: Provide keys directly as env vars (recommended for Docker)
+    JWT_PRIVATE_KEY: {
+      type: 'string',
+      default: ''
+    },
+    JWT_PUBLIC_KEY: {
+      type: 'string',
+      default: ''
+    },
+    // Option 2: Provide paths to key files (fallback)
     JWT_PRIVATE_KEY_PATH: {
       type: 'string',
       default: './keys/jwt-private.pem'
@@ -116,6 +126,8 @@ declare module 'fastify' {
       LOG_LEVEL: string
       DATABASE_URL: string
       SESSION_SECRET: string
+      JWT_PRIVATE_KEY: string
+      JWT_PUBLIC_KEY: string
       JWT_PRIVATE_KEY_PATH: string
       JWT_PUBLIC_KEY_PATH: string
       JWT_EXPIRES_IN: string
