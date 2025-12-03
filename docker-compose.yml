@@ -58,8 +58,8 @@ services:
       start_period: 40s
     networks:
       - koauth-network
-    # The entrypoint script will handle initialization, then run this command
-    command: ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
+    # Auto-configure Prisma provider based on DATABASE_URL, then migrate and start
+    command: ["sh", "-c", "/app/scripts/setup-prisma-provider.sh && npx prisma migrate deploy && node dist/server.js"]
 
   # Development database management UI (optional)
   adminer:

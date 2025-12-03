@@ -2,7 +2,9 @@
 
 ## Database Configuration
 
-This project supports both SQLite (development) and PostgreSQL (production).
+This project **automatically** supports both SQLite (development) and PostgreSQL (production).
+
+The Prisma provider is automatically configured based on your `DATABASE_URL` environment variable at container startup.
 
 ### Using SQLite (Development)
 
@@ -12,22 +14,16 @@ This project supports both SQLite (development) and PostgreSQL (production).
    DATABASE_URL=file:/data/db/koauth.db
    ```
 
-2. **Update `prisma/schema.prisma`:**
-   ```prisma
-   datasource db {
-     provider = "sqlite"  // Change from "postgresql" to "sqlite"
-     url      = env("DATABASE_URL")
-   }
-   ```
-
-3. **Update `docker-compose.yml`:**
-   - Postgres dependency is already commented out
-   - SQLite volume is mounted at `./data/db:/data/db`
-
-4. **Run:**
+2. **Run:**
    ```bash
    docker-compose up -d --build
    ```
+
+   The container will automatically:
+   - Detect SQLite from the `DATABASE_URL`
+   - Update Prisma schema to use `provider = "sqlite"`
+   - Run migrations
+   - Start the application
 
 ### Using PostgreSQL (Production)
 
@@ -37,21 +33,23 @@ This project supports both SQLite (development) and PostgreSQL (production).
    DATABASE_URL=postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public
    ```
 
-2. **Update `prisma/schema.prisma`:**
-   ```prisma
-   datasource db {
-     provider = "postgresql"  // Keep as "postgresql"
-     url      = env("DATABASE_URL")
-   }
+2. **Uncomment postgres dependency in `docker-compose.yml`:**
+   ```yaml
+   depends_on:
+     postgres:
+       condition: service_healthy
    ```
 
-3. **Update `docker-compose.yml`:**
-   - Uncomment the `depends_on` block for postgres
-
-4. **Run:**
+3. **Run:**
    ```bash
    docker-compose up -d --build
    ```
+
+   The container will automatically:
+   - Detect PostgreSQL from the `DATABASE_URL`
+   - Update Prisma schema to use `provider = "postgresql"`
+   - Run migrations
+   - Start the application
 
 ## Environment Variables
 
