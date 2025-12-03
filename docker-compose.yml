@@ -35,20 +35,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env  # Load all variables from .env file into container
     environment:
-      NODE_ENV: production
+      # Override specific values for Docker environment
+      # The app inside container always listens on port 3000
       PORT: 3000
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public
-      SESSION_SECRET: ${SESSION_SECRET:-dev_session_secret_change_in_production}
-      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      # Optional: Provide RSA keys as environment variables (base64 or PEM format)
-      # JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:-}
-      # JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:-}
+      # DATABASE_URL points to the postgres container instead of localhost
+      DATABASE_URL: ${DATABASE_URL:-postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public}
     ports:
-      - "${PORT:-3000}:3000"
+      # Map host port (from .env) to container port 3000
+      - "${HOST_PORT:-3002}:3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
