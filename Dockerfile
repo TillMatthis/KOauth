@@ -65,15 +65,11 @@ COPY --from=builder --chown=koauth:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=koauth:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=koauth:nodejs /app/dist/client ./dist/client
 
-# Install OpenSSL for Prisma runtime and curl for health checks
+# Install OpenSSL for Prisma runtime and curl for health checks (as root for apk)
 RUN apk add --no-cache openssl curl
 
-# Copy entrypoint script
-COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# NOTE: We stay as root in the Dockerfile
-# The entrypoint script will fix volume permissions then switch to koauth user
+# Switch to non-root user for security
+USER koauth
 
 # Expose port
 EXPOSE 3000
@@ -81,9 +77,6 @@ EXPOSE 3000
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:3000/health || exit 1
-
-# Set entrypoint to handle initialization
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application
 CMD ["node", "dist/server.js"]

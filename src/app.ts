@@ -37,9 +37,15 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   })
 
   // Initialize RSA keys for JWT signing (RS256)
+  // Priority: environment variables > files > generate new
   const privateKeyPath = resolve(app.config.JWT_PRIVATE_KEY_PATH)
   const publicKeyPath = resolve(app.config.JWT_PUBLIC_KEY_PATH)
-  const rsaKeys = initializeKeys(privateKeyPath, publicKeyPath)
+  const rsaKeys = initializeKeys(
+    privateKeyPath,
+    publicKeyPath,
+    app.config.JWT_PRIVATE_KEY,
+    app.config.JWT_PUBLIC_KEY
+  )
 
   // Store RSA keys in app context for use in routes
   ;(app as any).rsaKeys = rsaKeys
