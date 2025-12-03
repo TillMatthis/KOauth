@@ -66,7 +66,8 @@ COPY --from=builder --chown=koauth:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=koauth:nodejs /app/dist/client ./dist/client
 
 # Install OpenSSL for Prisma runtime and curl for health checks (as root for apk)
-RUN apk add --no-cache openssl curl
+RUN apk add --no-cache openssl curl && \
+    chmod +x /app/scripts/setup-prisma-provider.sh
 
 # Switch to non-root user for security
 USER koauth
