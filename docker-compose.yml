@@ -42,8 +42,8 @@ services:
       # The app inside container always listens on port 3000
       PORT: 3000
       HOST: 0.0.0.0
-      # DATABASE_URL points to the postgres container instead of localhost
-      DATABASE_URL: ${DATABASE_URL:-postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public}
+      # DATABASE_URL must point to postgres container (overrides .env file)
+      DATABASE_URL: postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public
     ports:
       # Map host port (from .env) to container port 3000
       - "${HOST_PORT:-3002}:3000"
