@@ -49,9 +49,10 @@ ENV NODE_ENV=production
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 koauth && \
-    mkdir -p /app && \
-    chown koauth:nodejs /app && \
-    chmod 755 /app
+    mkdir -p /app/keys && \
+    chown -R koauth:nodejs /app && \
+    chmod 755 /app && \
+    chmod 755 /app/keys
 
 # Set working directory (now owned by koauth)
 WORKDIR /app
