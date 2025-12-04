@@ -34,13 +34,28 @@ export async function authorizeRoute(app: FastifyInstance) {
       // Parse and validate query parameters
       const params = authorizeSchema.parse(request.query)
 
+      request.log.info({
+        msg: 'OAuth authorize request',
+        clientId: params.client_id,
+        redirectUri: params.redirect_uri,
+        cookies: request.cookies,
+        hasCookie: !!request.cookies.session_id
+      })
+
       // Check if user is logged in (populate request.user from session cookie)
       await optionalAuthenticate(request)
       if (!request.user) {
+        request.log.info({ msg: 'User not authenticated, redirecting to login' })
         // Redirect to login with return URL
         const returnUrl = encodeURIComponent(request.url)
         return reply.redirect(`/?redirect=/oauth${returnUrl}`)
       }
+
+      request.log.info({
+        msg: 'User authenticated',
+        userId: request.user.id,
+        sessionId: request.user.sessionId
+      })
 
       const user = request.user
 
@@ -75,7 +90,12 @@ export async function authorizeRoute(app: FastifyInstance) {
 
       // If client is trusted, skip consent screen
       if (client.trusted) {
-        return await approveAuthorization(reply, {
+        request.log.info({
+          msg: 'Client is trusted, auto-approving authorization',
+          clientId: params.client_id,
+          userId: user.id
+        })
+        return await approveAuthorization(reply, request, {
           userId: user.id,
           clientId: params.client_id,
           redirectUri: params.redirect_uri,
@@ -148,7 +168,7 @@ export async function authorizeRoute(app: FastifyInstance) {
       }
 
       // Approve authorization
-      return await approveAuthorization(reply, {
+      return await approveAuthorization(reply, request, {
         userId: user.id,
         clientId: params.client_id,
         redirectUri: params.redirect_uri,
@@ -172,6 +192,7 @@ export async function authorizeRoute(app: FastifyInstance) {
  */
 async function approveAuthorization(
   reply: FastifyReply,
+  request: FastifyRequest,
   params: {
     userId: string
     clientId: string
@@ -198,6 +219,12 @@ async function approveAuthorization(
   if (params.state) {
     redirectUrl.searchParams.set('state', params.state)
   }
+
+  request.log.info({
+    msg: 'Authorization approved, redirecting back to client',
+    redirectUrl: redirectUrl.toString(),
+    code: code.substring(0, 10) + '...'
+  })
 
   return reply.redirect(redirectUrl.toString())
 }

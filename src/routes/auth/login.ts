@@ -60,21 +60,37 @@ export async function loginRoute(app: FastifyInstance) {
       logger.info({ userId: user.id, sessionId }, 'Session created')
 
       // Set HTTP-only cookies
-      reply
-        .setCookie(SESSION_COOKIE_NAME, sessionId, {
+      const cookieOptions = {
+        sessionCookie: {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
-          sameSite: 'lax',
+          sameSite: 'lax' as const,
           path: '/',
           expires: expiresAt
-        })
-        .setCookie(REFRESH_COOKIE_NAME, refreshToken, {
+        },
+        refreshCookie: {
           httpOnly: true,
           secure: app.config.NODE_ENV === 'production',
-          sameSite: 'lax',
+          sameSite: 'lax' as const,
           path: '/api/auth',
           expires: expiresAt
-        })
+        }
+      }
+
+      logger.info({
+        msg: 'Setting session cookies',
+        sessionId,
+        cookieOptions: {
+          secure: cookieOptions.sessionCookie.secure,
+          sameSite: cookieOptions.sessionCookie.sameSite,
+          path: cookieOptions.sessionCookie.path
+        },
+        nodeEnv: app.config.NODE_ENV
+      })
+
+      reply
+        .setCookie(SESSION_COOKIE_NAME, sessionId, cookieOptions.sessionCookie)
+        .setCookie(REFRESH_COOKIE_NAME, refreshToken, cookieOptions.refreshCookie)
 
       // Generate JWT access token with RS256
       const rsaKeys = (app as any).rsaKeys
