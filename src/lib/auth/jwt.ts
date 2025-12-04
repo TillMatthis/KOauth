@@ -51,10 +51,14 @@ export function generateAccessToken(
   issuer?: string,
   audience?: string[]
 ): string {
+  // Generate unique JWT ID for token tracking and revocation
+  const jti = `at_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+
   const payload: JwtPayload = {
     sub: userId,
     email,
-    type: 'access_token'
+    type: 'access_token',
+    jti
   }
 
   if (issuer) {
