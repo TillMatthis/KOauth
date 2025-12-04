@@ -30,10 +30,13 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   })
 
   // Register environment variables with validation
+  // In Docker: env vars come from docker-compose.yml (env_file + environment)
+  // In local dev: dotenv loads from .env file
+  // Use dotenv only when not running in Docker (when .env file exists locally)
   await app.register(fastifyEnv, {
     confKey: 'config',
     schema: envSchema,
-    dotenv: true
+    dotenv: process.env.DOCKER !== 'true'  // Docker sets this via docker-compose
   })
 
   // Initialize RSA keys for JWT signing (RS256)
