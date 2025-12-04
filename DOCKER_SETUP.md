@@ -36,6 +36,7 @@ That's it! The app will:
 All environment variables from your `.env` file are loaded into the container via `env_file: .env`.
 
 **Docker overrides** (these are set by docker-compose.yml):
+- `DOCKER=true` - Signals the app to skip .env file loading (env vars come from Docker)
 - `PORT=3000` - App always listens on 3000 inside container
 - `HOST=0.0.0.0` - Binds to all interfaces
 - `DATABASE_URL=postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public`
@@ -44,6 +45,14 @@ All environment variables from your `.env` file are loaded into the container vi
 - The app listens on port 3000 inside the container
 - Set `HOST_PORT` in your `.env` to expose on a different host port (default: 3002)
 - Example: `HOST_PORT=8080` maps host:8080 → container:3000
+
+## How Environment Loading Works
+
+1. **Docker Compose** reads your `.env` file from the host
+2. Variables are injected into the container via `env_file: .env`
+3. Docker-specific overrides are applied from the `environment:` section
+4. The app detects `DOCKER=true` and skips trying to read a .env file
+5. `@fastify/env` validates all variables from `process.env`
 
 ## Accessing the Database
 

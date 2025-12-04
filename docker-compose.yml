@@ -39,6 +39,10 @@ services:
     env_file:
       - .env  # Load all variables from .env file into container
     environment:
+      # Signal to the app that it's running in Docker (disables dotenv file loading)
+      DOCKER: "true"
+      # Override specific values for Docker environment
+      # The app inside container always listens on port 3000
       # Override only Docker-specific values, DATABASE_URL comes from .env
       PORT: 3000
       HOST: 0.0.0.0
