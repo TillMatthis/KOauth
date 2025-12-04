@@ -26,9 +26,10 @@ This Docker setup uses **PostgreSQL for all environments** (development and prod
 
 That's it! The app will:
 - Start PostgreSQL container
+- Wait for PostgreSQL to be healthy
 - Load your `.env` variables
-- Override DATABASE_URL to use the postgres container
-- Run migrations
+- Override DATABASE_URL to always use the postgres container
+- Run Prisma migrations automatically
 - Start the application on port 3002 (configurable via HOST_PORT)
 
 ## Environment Variables
