@@ -32,23 +32,21 @@ services:
       target: production
     container_name: koauth-app
     restart: unless-stopped
-    # Note: Remove postgres dependency if using SQLite (NODE_ENV=development)
-    # depends_on:
-    #   postgres:
-    #     condition: service_healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
     env_file:
       - .env  # Load all variables from .env file into container
     environment:
       # Signal to the app that it's running in Docker (disables dotenv file loading)
       DOCKER: "true"
+      # Override DATABASE_URL to always use postgres container
+      DATABASE_URL: "postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public"
       # Override specific values for Docker environment
       # The app inside container always listens on port 3000
-      # Override only Docker-specific values, DATABASE_URL comes from .env
       PORT: 3000
       HOST: 0.0.0.0
     volumes:
-      # Volume for SQLite database (only needed if using DATABASE_URL=file:/data/db/koauth.db)
-      - ./data/db:/data/db
       # Volume for RSA keys persistence
       - ./keys:/app/keys
     ports:
@@ -62,8 +60,7 @@ services:
       start_period: 40s
     networks:
       - koauth-network
-    # Auto-configure Prisma provider based on DATABASE_URL, then migrate and start
-    command: ["sh", "-c", "/app/scripts/setup-prisma-provider.sh && npx prisma migrate deploy && node dist/server.js"]
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/server.js"]
 
   # Development database management UI (optional)
   adminer:
