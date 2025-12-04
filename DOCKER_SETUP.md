@@ -1,66 +1,95 @@
 # Docker Setup Guide
 
-## Database Configuration
+## Simple Setup (Best Practice)
 
-This project **automatically** supports both SQLite (development) and PostgreSQL (production).
+This Docker setup uses **PostgreSQL for all environments** (development and production).
 
-The Prisma provider is automatically configured based on your `DATABASE_URL` environment variable at container startup.
+### Why PostgreSQL everywhere?
+- ✅ No database differences between dev and prod
+- ✅ No manual schema file editing required
+- ✅ Standard Docker + Prisma pattern
+- ✅ Simple and maintainable
 
-### Using SQLite (Development)
+## Quick Start
 
-1. **Update `.env`:**
+1. **Create your `.env` file** (copy from `.env.example`):
    ```bash
-   NODE_ENV=development
-   DATABASE_URL=file:/data/db/koauth.db
+   cp .env.example .env
    ```
 
-2. **Run:**
+2. **Edit your secrets** (SESSION_SECRET, etc.)
+
+3. **Start everything**:
    ```bash
-   docker-compose up -d --build
+   docker-compose up -d
    ```
 
-   The container will automatically:
-   - Detect SQLite from the `DATABASE_URL`
-   - Update Prisma schema to use `provider = "sqlite"`
-   - Run migrations
-   - Start the application
-
-### Using PostgreSQL (Production)
-
-1. **Update `.env`:**
-   ```bash
-   NODE_ENV=production
-   DATABASE_URL=postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public
-   ```
-
-2. **Uncomment postgres dependency in `docker-compose.yml`:**
-   ```yaml
-   depends_on:
-     postgres:
-       condition: service_healthy
-   ```
-
-3. **Run:**
-   ```bash
-   docker-compose up -d --build
-   ```
-
-   The container will automatically:
-   - Detect PostgreSQL from the `DATABASE_URL`
-   - Update Prisma schema to use `provider = "postgresql"`
-   - Run migrations
-   - Start the application
+That's it! The app will:
+- Start PostgreSQL container
+- Load your `.env` variables
+- Override DATABASE_URL to use the postgres container
+- Run migrations
+- Start the application on port 3002 (configurable via HOST_PORT)
 
 ## Environment Variables
 
-All environment variables are loaded from the `.env` file via `env_file: .env` in docker-compose.yml.
+All environment variables from your `.env` file are loaded into the container via `env_file: .env`.
 
-Docker-specific overrides:
+**Docker overrides** (these are set by docker-compose.yml):
 - `PORT=3000` - App always listens on 3000 inside container
 - `HOST=0.0.0.0` - Binds to all interfaces
-- `HOST_PORT` - Port to expose on host machine (default: 3002)
+- `DATABASE_URL=postgresql://koauth:koauth_dev_password@postgres:5432/koauth?schema=public`
 
-## Volumes
+**Port mapping**:
+- The app listens on port 3000 inside the container
+- Set `HOST_PORT` in your `.env` to expose on a different host port (default: 3002)
+- Example: `HOST_PORT=8080` maps host:8080 → container:3000
 
-- `./data/db:/data/db` - SQLite database persistence
-- `./keys:/app/keys` - RSA keys persistence
+## Accessing the Database
+
+**Using Adminer** (Database Web UI):
+```bash
+docker-compose --profile tools up -d adminer
+```
+Then visit: http://localhost:8080
+
+**Using psql**:
+```bash
+docker exec -it koauth-postgres psql -U koauth -d koauth
+```
+
+## Logs
+
+```bash
+# All logs
+docker-compose logs -f
+
+# Just app logs
+docker-compose logs -f app
+
+# Just database logs
+docker-compose logs -f postgres
+```
+
+## Troubleshooting
+
+**Container won't start?**
+```bash
+docker-compose down
+docker-compose up -d --build
+```
+
+**Database issues?**
+```bash
+# Check postgres health
+docker-compose ps
+
+# View migrations
+docker exec -it koauth-app npx prisma migrate status
+```
+
+**Reset everything** (⚠️ deletes data):
+```bash
+docker-compose down -v
+docker-compose up -d --build
+```
