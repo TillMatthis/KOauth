@@ -46,6 +46,8 @@ services:
       # The app inside container always listens on port 3000
       PORT: 3000
       HOST: 0.0.0.0
+      # Set production mode for secure cookies behind reverse proxy
+      NODE_ENV: "production"
     volumes:
       # Volume for RSA keys persistence
       - ./keys:/app/keys

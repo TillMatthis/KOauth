@@ -26,6 +26,7 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     requestIdLogLabel: 'reqId',
     disableRequestLogging: false,
     requestIdHeader: 'x-request-id',
+    trustProxy: true, // Required when behind reverse proxy (Caddy, nginx, etc.)
     ...opts
   })
 
