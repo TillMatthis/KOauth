@@ -146,8 +146,11 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   await jwksRoute(app)
 
   // Register OAuth Authorization Server Metadata endpoint
-  const { oauthMetadataRoute } = await import('./routes/oauth-metadata')
+  const { oauthMetadataRoute, oauthProtectedResourceRoute } = await import('./routes/oauth-metadata')
   await oauthMetadataRoute(app)
+  
+  // Register OAuth Protected Resource Metadata endpoint (RFC 9728)
+  await oauthProtectedResourceRoute(app)
 
   // Register /api/me routes with rate limiting
   await app.register(async (apiScope) => {

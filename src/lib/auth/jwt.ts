@@ -256,3 +256,37 @@ export function createTokenResponse(accessToken: string, expiresIn: string) {
     expires_in: parseExpiresIn(expiresIn)
   }
 }
+
+/**
+ * Extract scopes from JWT payload
+ * @param payload - JWT payload
+ * @returns Array of scope strings, empty array if no scopes
+ */
+export function getTokenScopes(payload: JwtPayload): string[] {
+  if (!payload.scope) {
+    return []
+  }
+  return payload.scope.split(' ').filter(scope => scope.length > 0)
+}
+
+/**
+ * Check if JWT payload has a specific scope
+ * @param payload - JWT payload
+ * @param requiredScope - Required scope to check
+ * @returns True if the payload contains the required scope
+ */
+export function hasScope(payload: JwtPayload, requiredScope: string): boolean {
+  const scopes = getTokenScopes(payload)
+  return scopes.includes(requiredScope)
+}
+
+/**
+ * Check if JWT payload has any of the required scopes
+ * @param payload - JWT payload
+ * @param requiredScopes - Array of scopes to check (at least one must be present)
+ * @returns True if the payload contains at least one of the required scopes
+ */
+export function hasAnyScope(payload: JwtPayload, requiredScopes: string[]): boolean {
+  const scopes = getTokenScopes(payload)
+  return requiredScopes.some(scope => scopes.includes(scope))
+}
