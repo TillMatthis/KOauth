@@ -118,7 +118,7 @@ async function handleAuthorizationCodeGrant(
     token_type: 'Bearer',
     expires_in: result.expiresIn,
     refresh_token: result.refreshToken,
-    scope: 'openid profile email',
+    scope: result.scopes.join(' '),
     // OpenID Connect ID token (optional - can implement later)
     // id_token: generateIdToken(result.userId, result.email)
   })
@@ -162,6 +162,6 @@ async function handleRefreshTokenGrant(
     token_type: 'Bearer',
     expires_in: result.expiresIn,
     refresh_token: result.refreshToken,
-    scope: 'openid profile email'
+    scope: result.scopes.join(' ')
   })
 }
