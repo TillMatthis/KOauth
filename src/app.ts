@@ -145,6 +145,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   const { jwksRoute } = await import('./routes/jwks')
   await jwksRoute(app)
 
+  // Register OAuth Authorization Server Metadata endpoint
+  const { oauthMetadataRoute } = await import('./routes/oauth-metadata')
+  await oauthMetadataRoute(app)
+
   // Register /api/me routes with rate limiting
   await app.register(async (apiScope) => {
     // Rate limit for API endpoints (stricter for key generation)
