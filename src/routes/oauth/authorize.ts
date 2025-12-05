@@ -38,17 +38,33 @@ export async function authorizeRoute(app: FastifyInstance) {
         msg: 'OAuth authorize request',
         clientId: params.client_id,
         redirectUri: params.redirect_uri,
-        cookies: request.cookies,
-        hasCookie: !!request.cookies.session_id
+        scope: params.scope,
+        state: params.state,
+        codeChallenge: params.code_challenge ? 'present' : 'missing',
+        codeChallengeMethod: params.code_challenge_method,
+        cookies: Object.keys(request.cookies || {}),
+        hasSessionCookie: !!request.cookies.session_id,
+        userAgent: request.headers['user-agent'],
+        ip: request.ip
       })
 
       // Check if user is logged in (populate request.user from session cookie)
       await optionalAuthenticate(request)
       if (!request.user) {
-        request.log.info({ msg: 'User not authenticated, redirecting to login' })
+        request.log.info({ 
+          msg: 'User not authenticated, redirecting to login',
+          originalUrl: request.url,
+          queryParams: request.query
+        })
         // Redirect to login with return URL
+        // request.url already includes the full path with query params
         const returnUrl = encodeURIComponent(request.url)
-        return reply.redirect(`/?redirect=/oauth${returnUrl}`)
+        request.log.info({ 
+          msg: 'Redirecting to login',
+          returnUrl,
+          loginUrl: `/?redirect=${returnUrl}`
+        })
+        return reply.redirect(`/?redirect=${returnUrl}`)
       }
 
       request.log.info({
@@ -70,11 +86,23 @@ export async function authorizeRoute(app: FastifyInstance) {
 
       // Validate redirect URI
       if (!validateRedirectUri(client, params.redirect_uri)) {
+        request.log.warn({
+          msg: 'Invalid redirect_uri',
+          clientId: params.client_id,
+          requestedRedirectUri: params.redirect_uri,
+          allowedRedirectUris: client.redirectUris
+        })
         return reply.status(400).send({
           error: 'invalid_request',
           error_description: 'Invalid redirect_uri'
         })
       }
+      
+      request.log.info({
+        msg: 'Redirect URI validated',
+        clientId: params.client_id,
+        redirectUri: params.redirect_uri
+      })
 
       // Parse and validate scopes
       const requestedScopes = params.scope.split(' ')
@@ -223,7 +251,12 @@ async function approveAuthorization(
   request.log.info({
     msg: 'Authorization approved, redirecting back to client',
     redirectUrl: redirectUrl.toString(),
-    code: code.substring(0, 10) + '...'
+    codePrefix: code.substring(0, 10) + '...',
+    codeLength: code.length,
+    userId: params.userId,
+    clientId: params.clientId,
+    scopes: params.scopes,
+    hasState: !!params.state
   })
 
   return reply.redirect(redirectUrl.toString())

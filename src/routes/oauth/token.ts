@@ -35,17 +35,47 @@ const tokenRequestSchema = z.discriminatedUnion('grant_type', [
 export async function tokenRoute(app: FastifyInstance) {
   app.post('/token', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
+      request.log.info({
+        msg: 'OAuth token request received',
+        contentType: request.headers['content-type'],
+        hasBody: !!request.body
+      })
+
       // Parse request body
       const body = tokenRequestSchema.parse(request.body)
+
+      request.log.info({
+        msg: 'Token request parsed',
+        grantType: body.grant_type,
+        clientId: body.client_id,
+        hasClientSecret: !!body.client_secret,
+        ...(body.grant_type === 'authorization_code' ? {
+          codePrefix: body.code.substring(0, 10) + '...',
+          redirectUri: body.redirect_uri,
+          hasCodeVerifier: !!body.code_verifier
+        } : {
+          hasRefreshToken: !!body.refresh_token
+        })
+      })
 
       // Validate client credentials
       const client = await validateClientCredentials(body.client_id, body.client_secret)
       if (!client) {
+        request.log.warn({
+          msg: 'Invalid client credentials',
+          clientId: body.client_id
+        })
         return reply.status(401).send({
           error: 'invalid_client',
           error_description: 'Invalid client credentials'
         })
       }
+
+      request.log.info({
+        msg: 'Client credentials validated',
+        clientId: client.clientId,
+        clientName: client.name
+      })
 
       // Handle different grant types
       if (body.grant_type === 'authorization_code') {
@@ -67,7 +97,11 @@ export async function tokenRoute(app: FastifyInstance) {
         })
       }
 
-      request.log.error(error, 'Token endpoint error')
+      request.log.error({
+        msg: 'Token endpoint error',
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      }, 'Token endpoint error')
       return reply.status(500).send({
         error: 'server_error',
         error_description: 'Internal server error'
@@ -95,6 +129,14 @@ async function handleAuthorizationCodeGrant(
   const rsaKeys = (app as any).rsaKeys
   const audience = (app as any).jwtAudience
 
+  request.log.info({
+    msg: 'Exchanging authorization code for tokens',
+    codePrefix: body.code.substring(0, 10) + '...',
+    redirectUri: body.redirect_uri,
+    clientId: body.client_id,
+    hasCodeVerifier: !!body.code_verifier
+  })
+
   const result = await exchangeAuthorizationCode({
     code: body.code,
     clientId: body.client_id,
@@ -107,11 +149,24 @@ async function handleAuthorizationCodeGrant(
   })
 
   if (!result) {
+    request.log.warn({
+      msg: 'Authorization code exchange failed',
+      codePrefix: body.code.substring(0, 10) + '...',
+      redirectUri: body.redirect_uri,
+      clientId: body.client_id
+    })
     return reply.status(400).send({
       error: 'invalid_grant',
       error_description: 'Invalid or expired authorization code'
     })
   }
+
+  request.log.info({
+    msg: 'Authorization code exchanged successfully',
+    userId: result.userId,
+    scopes: result.scopes,
+    expiresIn: result.expiresIn
+  })
 
   return reply.status(200).send({
     access_token: result.accessToken,

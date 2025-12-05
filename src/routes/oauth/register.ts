@@ -45,10 +45,24 @@ export async function registerRoute(app: FastifyInstance) {
     '/register',
     async (request: FastifyRequest<{ Body: RegisterClientRequest }>, reply: FastifyReply) => {
       try {
+        request.log.info({
+          msg: 'OAuth client registration request',
+          clientName: (request.body as any)?.client_name,
+          redirectUrisCount: Array.isArray((request.body as any)?.redirect_uris) 
+            ? (request.body as any).redirect_uris.length 
+            : 0,
+          ip: request.ip,
+          userAgent: request.headers['user-agent']
+        })
+
         // Validate request body
         const validationResult = registerClientSchema.safeParse(request.body)
 
         if (!validationResult.success) {
+          request.log.warn({
+            msg: 'Invalid client registration request',
+            errors: validationResult.error.errors
+          })
           return reply.status(400).send({
             error: 'invalid_client_metadata',
             error_description: validationResult.error.message
@@ -56,6 +70,14 @@ export async function registerRoute(app: FastifyInstance) {
         }
 
         const data = validationResult.data
+
+        request.log.info({
+          msg: 'Client registration request validated',
+          clientName: data.client_name,
+          redirectUris: data.redirect_uris,
+          grantTypes: data.grant_types,
+          scopes: data.scope
+        })
 
         // Parse requested scopes (default to basic scopes)
         const requestedScopes = data.scope
@@ -98,6 +120,13 @@ export async function registerRoute(app: FastifyInstance) {
           }
         })
 
+        request.log.info({
+          msg: 'OAuth client registered successfully',
+          clientId: client.clientId,
+          clientName: client.name,
+          redirectUris: client.redirectUris
+        })
+
         // Return client registration response (RFC 7591)
         return reply.status(201).send({
           client_id: client.clientId,
@@ -111,7 +140,11 @@ export async function registerRoute(app: FastifyInstance) {
           scope: requestedScopes.join(' ')
         })
       } catch (error) {
-        request.log.error(error, 'Error registering OAuth client')
+        request.log.error({
+          msg: 'Error registering OAuth client',
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        }, 'Error registering OAuth client')
         return reply.status(500).send({
           error: 'server_error',
           error_description: 'Failed to register client'
