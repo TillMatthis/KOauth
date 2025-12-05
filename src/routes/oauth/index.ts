@@ -6,6 +6,7 @@
 import type { FastifyInstance } from 'fastify'
 import { authorizeRoute } from './authorize'
 import { tokenRoute } from './token'
+import { registerRoute } from './register'
 
 /**
  * Register all OAuth routes
@@ -13,4 +14,5 @@ import { tokenRoute } from './token'
 export async function registerOAuthRoutes(app: FastifyInstance) {
   await authorizeRoute(app)
   await tokenRoute(app)
+  await registerRoute(app)
 }
