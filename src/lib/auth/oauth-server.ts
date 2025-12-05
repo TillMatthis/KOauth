@@ -156,6 +156,7 @@ export async function exchangeAuthorizationCode(params: {
   expiresIn: number
   userId: string
   email: string
+  scopes: string[]
 } | null> {
   // Find the authorization code
   const authCode = await prisma.oAuthAuthorizationCode.findUnique({
@@ -221,13 +222,15 @@ export async function exchangeAuthorizationCode(params: {
 
   // Generate access token (JWT) with RS256
   const jwtExpiresIn = params.jwtExpiresIn || '15m'
+  const scopeString = authCode.scopes.join(' ')
   const accessToken = generateAccessToken(
     user.id,
     user.email,
     params.rsaKeys,
     jwtExpiresIn,
     params.issuer,
-    params.audience
+    params.audience,
+    scopeString
   )
 
   // Generate refresh token
@@ -253,7 +256,8 @@ export async function exchangeAuthorizationCode(params: {
     refreshToken: refreshTokenValue,
     expiresIn,
     userId: user.id,
-    email: user.email
+    email: user.email,
+    scopes: authCode.scopes
   }
 }
 
@@ -271,6 +275,7 @@ export async function refreshAccessToken(params: {
   accessToken: string
   refreshToken: string
   expiresIn: number
+  scopes: string[]
 } | null> {
   // Hash the provided refresh token
   const tokenHash = await hashToken(params.refreshToken)
@@ -310,13 +315,15 @@ export async function refreshAccessToken(params: {
 
   // Generate new access token with RS256
   const jwtExpiresIn = params.jwtExpiresIn || '15m'
+  const scopeString = storedToken.scopes.join(' ')
   const accessToken = generateAccessToken(
     user.id,
     user.email,
     params.rsaKeys,
     jwtExpiresIn,
     params.issuer,
-    params.audience
+    params.audience,
+    scopeString
   )
 
   // Generate new refresh token (token rotation)
@@ -346,7 +353,8 @@ export async function refreshAccessToken(params: {
   return {
     accessToken,
     refreshToken: newRefreshTokenValue,
-    expiresIn
+    expiresIn,
+    scopes: storedToken.scopes
   }
 }
 

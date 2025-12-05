@@ -20,6 +20,7 @@ export interface JwtPayload {
   aud?: string[]        // Audience (resource servers)
   type?: TokenType      // Token type
   jti?: string          // JWT ID (for revocation)
+  scope?: string        // OAuth scopes (space-separated)
   iat?: number          // Issued at (added automatically)
   exp?: number          // Expiration (added automatically)
 }
@@ -41,6 +42,7 @@ export interface RsaKeyConfig {
  * @param expiresIn - Token expiration time (e.g., "15m", "1h")
  * @param issuer - Issuer URL (KOauth base URL)
  * @param audience - Audience list (resource servers)
+ * @param scope - OAuth scopes (space-separated string)
  * @returns Signed JWT access token
  */
 export function generateAccessToken(
@@ -49,7 +51,8 @@ export function generateAccessToken(
   rsaKeys: RsaKeyConfig,
   expiresIn: string | number = '15m',
   issuer?: string,
-  audience?: string[]
+  audience?: string[],
+  scope?: string
 ): string {
   // Generate unique JWT ID for token tracking and revocation
   const jti = `at_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
@@ -67,6 +70,10 @@ export function generateAccessToken(
 
   if (audience && audience.length > 0) {
     payload.aud = audience
+  }
+
+  if (scope) {
+    payload.scope = scope
   }
 
   return jwt.sign(payload, rsaKeys.privateKey, {
