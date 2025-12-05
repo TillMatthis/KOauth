@@ -22,7 +22,17 @@ export async function oauthMetadataRoute(app: FastifyInstance) {
         authorization_endpoint: `${issuer}/oauth/authorize`,
         token_endpoint: `${issuer}/oauth/token`,
         jwks_uri: `${issuer}/.well-known/jwks.json`,
-        scopes_supported: ['openid', 'profile', 'email'],
+        registration_endpoint: `${issuer}/oauth/register`,
+        scopes_supported: [
+          'mcp:tools:read',
+          'mcp:tools:execute',
+          'kura:notes:read',
+          'kura:notes:write',
+          'kura:notes:delete',
+          'openid',
+          'profile',
+          'email'
+        ],
         response_types_supported: ['code'],
         grant_types_supported: ['authorization_code', 'refresh_token'],
         token_endpoint_auth_methods_supported: [
