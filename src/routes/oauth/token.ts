@@ -62,8 +62,10 @@ export async function tokenRoute(app: FastifyInstance) {
       const client = await validateClientCredentials(body.client_id, body.client_secret)
       if (!client) {
         request.log.warn({
-          msg: 'Invalid client credentials',
-          clientId: body.client_id
+          msg: 'Invalid client credentials - authentication failed',
+          clientId: body.client_id,
+          hasClientSecret: !!body.client_secret,
+          clientSecretLength: body.client_secret?.length || 0
         })
         return reply.status(401).send({
           error: 'invalid_client',
@@ -150,10 +152,19 @@ async function handleAuthorizationCodeGrant(
 
   if (!result) {
     request.log.warn({
-      msg: 'Authorization code exchange failed',
+      msg: 'Authorization code exchange failed - invalid or expired code',
       codePrefix: body.code.substring(0, 10) + '...',
       redirectUri: body.redirect_uri,
-      clientId: body.client_id
+      clientId: body.client_id,
+      hasCodeVerifier: !!body.code_verifier,
+      possibleReasons: [
+        'Authorization code not found',
+        'Authorization code already used',
+        'Authorization code expired',
+        'Client ID mismatch',
+        'Redirect URI mismatch',
+        'PKCE code verifier mismatch'
+      ]
     })
     return reply.status(400).send({
       error: 'invalid_grant',
@@ -162,10 +173,14 @@ async function handleAuthorizationCodeGrant(
   }
 
   request.log.info({
-    msg: 'Authorization code exchanged successfully',
+    msg: 'Authorization code exchanged successfully - tokens issued',
     userId: result.userId,
+    userEmail: result.email,
+    clientId: body.client_id,
     scopes: result.scopes,
-    expiresIn: result.expiresIn
+    expiresIn: result.expiresIn,
+    redirectUri: body.redirect_uri,
+    tokenType: 'Bearer'
   })
 
   return reply.status(200).send({
