@@ -51,6 +51,13 @@ export async function registerRoute(app: FastifyInstance) {
           redirectUrisCount: Array.isArray((request.body as any)?.redirect_uris) 
             ? (request.body as any).redirect_uris.length 
             : 0,
+          redirectUris: Array.isArray((request.body as any)?.redirect_uris)
+            ? (request.body as any).redirect_uris
+            : [],
+          grantTypes: (request.body as any)?.grant_types,
+          responseTypes: (request.body as any)?.response_types,
+          scopes: (request.body as any)?.scope,
+          tokenEndpointAuthMethod: (request.body as any)?.token_endpoint_auth_method,
           ip: request.ip,
           userAgent: request.headers['user-agent']
         })
@@ -124,7 +131,12 @@ export async function registerRoute(app: FastifyInstance) {
           msg: 'OAuth client registered successfully',
           clientId: client.clientId,
           clientName: client.name,
-          redirectUris: client.redirectUris
+          redirectUris: client.redirectUris,
+          grantTypes: client.grantTypes,
+          scopes: client.scopes,
+          trusted: client.trusted,
+          active: client.active,
+          createdAt: client.createdAt.toISOString()
         })
 
         // Return client registration response (RFC 7591)

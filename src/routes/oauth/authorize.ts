@@ -87,10 +87,13 @@ export async function authorizeRoute(app: FastifyInstance) {
       // Validate redirect URI
       if (!validateRedirectUri(client, params.redirect_uri)) {
         request.log.warn({
-          msg: 'Invalid redirect_uri',
+          msg: 'Invalid redirect_uri - redirect URI mismatch',
           clientId: params.client_id,
+          clientName: client.name,
           requestedRedirectUri: params.redirect_uri,
-          allowedRedirectUris: client.redirectUris
+          allowedRedirectUris: client.redirectUris,
+          redirectUriMatch: false,
+          redirectUriExactMatch: client.redirectUris.includes(params.redirect_uri)
         })
         return reply.status(400).send({
           error: 'invalid_request',
@@ -99,9 +102,12 @@ export async function authorizeRoute(app: FastifyInstance) {
       }
       
       request.log.info({
-        msg: 'Redirect URI validated',
+        msg: 'Redirect URI validated successfully',
         clientId: params.client_id,
-        redirectUri: params.redirect_uri
+        clientName: client.name,
+        redirectUri: params.redirect_uri,
+        redirectUriMatch: true,
+        allowedRedirectUris: client.redirectUris
       })
 
       // Parse and validate scopes
