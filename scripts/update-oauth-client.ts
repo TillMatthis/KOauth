@@ -32,8 +32,21 @@ if (args.length === 0) {
 const clientId = args[0]
 const flags = args.slice(1)
 
-// Parse flags
-const redirectUrisFlag = flags.find(f => f.startsWith('--redirect-uris='))
+// Debug: Log received arguments (remove in production)
+if (process.env.DEBUG) {
+  console.log('Debug - Received args:', args)
+  console.log('Debug - Flags:', flags)
+}
+
+// Parse flags - handle both --redirect-uris=value and --redirect-uris value formats
+let redirectUrisFlag = flags.find(f => f.startsWith('--redirect-uris='))
+if (!redirectUrisFlag) {
+  // Try to find --redirect-uris followed by the value as next argument
+  const redirectUrisIndex = flags.findIndex(f => f === '--redirect-uris')
+  if (redirectUrisIndex !== -1 && flags[redirectUrisIndex + 1]) {
+    redirectUrisFlag = `--redirect-uris=${flags[redirectUrisIndex + 1]}`
+  }
+}
 const redirectUris = redirectUrisFlag 
   ? redirectUrisFlag.split('=')[1].split(',').map(uri => uri.trim()).filter(Boolean)
   : null
