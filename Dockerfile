@@ -15,8 +15,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install OpenSSL for Prisma and build tools for native dependencies (better-sqlite3)
-RUN apk add --no-cache openssl openssl-dev python3 make g++ git && \
-    ln -sf python3 /usr/bin/python
+# Set PYTHON environment variable for node-gyp (better-sqlite3 compilation)
+ENV PYTHON=python3
+RUN apk add --no-cache openssl openssl-dev python3 make g++ git
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
