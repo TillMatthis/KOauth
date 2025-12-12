@@ -9,7 +9,6 @@
  */
 
 import type { FastifyInstance } from 'fastify'
-import fastifyCors from '@fastify/cors'
 
 /**
  * Register the OAuth Authorization Server Metadata endpoint
@@ -19,21 +18,11 @@ import fastifyCors from '@fastify/cors'
  * CRITICAL: This endpoint MUST be publicly accessible and never return 401/403
  * It's a discovery endpoint used by OAuth clients (like Claude Custom Connector)
  * 
- * NOTE: Uses route-scoped CORS without credentials to allow wildcard origin (*)
+ * NOTE: Manually sets CORS headers to allow wildcard origin (*) without credentials
  * This is incompatible with the global CORS config that uses credentials: true
  */
 export async function oauthMetadataRoute(app: FastifyInstance) {
-  // Register route-scoped CORS for this endpoint only
-  // This allows wildcard origin (*) without credentials, which is required
-  // for public discovery endpoints per RFC 8414
-  // NOTE: credentials: false is required when using origin: '*' per CORS spec
-  await app.register(async (routeScope) => {
-    await routeScope.register(fastifyCors, {
-      origin: '*', // Wildcard origin - requires credentials: false
-      credentials: false // Must be false when using wildcard origin
-    })
-
-    routeScope.get('/.well-known/oauth-authorization-server', async (request, reply) => {
+  app.get('/.well-known/oauth-authorization-server', async (request, reply) => {
       try {
         const issuer = app.config.JWT_ISSUER
 
@@ -67,6 +56,11 @@ export async function oauthMetadataRoute(app: FastifyInstance) {
           registration_endpoint: `${issuer}/oauth/register`
         }
 
+        // Set CORS headers for public discovery endpoint (wildcard origin, no credentials)
+        reply.header('Access-Control-Allow-Origin', '*')
+        reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+        reply.header('Access-Control-Allow-Headers', 'Content-Type')
+        
         // Set cache headers (cache for 1 hour)
         reply.header('Cache-Control', 'public, max-age=3600')
         reply.header('Content-Type', 'application/json')
@@ -80,7 +74,14 @@ export async function oauthMetadataRoute(app: FastifyInstance) {
           error: 'Internal server error'
         })
       }
-    })
+  })
+  
+  // Handle OPTIONS preflight for CORS
+  app.options('/.well-known/oauth-authorization-server', async (request, reply) => {
+    reply.header('Access-Control-Allow-Origin', '*')
+    reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    reply.header('Access-Control-Allow-Headers', 'Content-Type')
+    return reply.status(204).send()
   })
 }
 
@@ -113,6 +114,11 @@ export async function oauthProtectedResourceRoute(app: FastifyInstance) {
         bearer_methods_supported: ['header'] // Supported bearer token methods
       }
 
+      // Set CORS headers for public discovery endpoint (wildcard origin, no credentials)
+      reply.header('Access-Control-Allow-Origin', '*')
+      reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+      reply.header('Access-Control-Allow-Headers', 'Content-Type')
+      
       // Set cache headers (cache for 1 hour)
       reply.header('Cache-Control', 'public, max-age=3600')
       reply.header('Content-Type', 'application/json')
@@ -124,5 +130,13 @@ export async function oauthProtectedResourceRoute(app: FastifyInstance) {
         error: 'Internal server error'
       })
     }
+  })
+  
+  // Handle OPTIONS preflight for CORS
+  app.options('/.well-known/oauth-protected-resource', async (request, reply) => {
+    reply.header('Access-Control-Allow-Origin', '*')
+    reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    reply.header('Access-Control-Allow-Headers', 'Content-Type')
+    return reply.status(204).send()
   })
 }
