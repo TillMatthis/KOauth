@@ -352,7 +352,6 @@ export function generateIdToken(
   }
 
   return jwt.sign(payload, rsaKeys.privateKey, {
-    expiresIn: expiresIn as any,
     algorithm: 'RS256',
     keyid: rsaKeys.kid
   } as SignOptions)
