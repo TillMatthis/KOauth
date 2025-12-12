@@ -156,6 +156,7 @@ export async function exchangeAuthorizationCode(params: {
   expiresIn: number
   userId: string
   email: string
+  emailVerified: boolean
   scopes: string[]
 } | null> {
   // Find the authorization code
@@ -257,6 +258,7 @@ export async function exchangeAuthorizationCode(params: {
     expiresIn,
     userId: user.id,
     email: user.email,
+    emailVerified: user.emailVerified,
     scopes: authCode.scopes
   }
 }
@@ -275,6 +277,9 @@ export async function refreshAccessToken(params: {
   accessToken: string
   refreshToken: string
   expiresIn: number
+  userId: string
+  email: string
+  emailVerified: boolean
   scopes: string[]
 } | null> {
   // Hash the provided refresh token
@@ -354,6 +359,9 @@ export async function refreshAccessToken(params: {
     accessToken,
     refreshToken: newRefreshTokenValue,
     expiresIn,
+    userId: user.id,
+    email: user.email,
+    emailVerified: user.emailVerified,
     scopes: storedToken.scopes
   }
 }
