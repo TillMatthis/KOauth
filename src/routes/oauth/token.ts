@@ -207,6 +207,18 @@ async function handleAuthorizationCodeGrant(
     response.id_token = idToken
   }
 
+  // Log the response for debugging (without sensitive token values)
+  request.log.debug({
+    msg: 'Token endpoint response',
+    hasAccessToken: !!response.access_token,
+    hasRefreshToken: !!response.refresh_token,
+    hasIdToken: !!response.id_token,
+    tokenType: response.token_type,
+    expiresIn: response.expires_in,
+    scope: response.scope,
+    idTokenLength: response.id_token?.length
+  })
+
   return reply.status(200).send(response)
 }
 
