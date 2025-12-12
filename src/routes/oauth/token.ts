@@ -10,6 +10,7 @@ import {
   exchangeAuthorizationCode,
   refreshAccessToken
 } from '../../lib/auth/oauth-server'
+import { generateIdToken } from '../../lib/auth/jwt'
 
 // Token request schema for authorization code grant
 const tokenRequestSchema = z.discriminatedUnion('grant_type', [
@@ -180,18 +181,33 @@ async function handleAuthorizationCodeGrant(
     scopes: result.scopes,
     expiresIn: result.expiresIn,
     redirectUri: body.redirect_uri,
-    tokenType: 'Bearer'
+    tokenType: 'Bearer',
+    hasOpenIdScope: result.scopes.includes('openid')
   })
 
-  return reply.status(200).send({
+  const response: any = {
     access_token: result.accessToken,
     token_type: 'Bearer',
     expires_in: result.expiresIn,
     refresh_token: result.refreshToken,
-    scope: result.scopes.join(' '),
-    // OpenID Connect ID token (optional - can implement later)
-    // id_token: generateIdToken(result.userId, result.email)
-  })
+    scope: result.scopes.join(' ')
+  }
+
+  // Include ID token if openid scope is requested (OpenID Connect requirement)
+  if (result.scopes.includes('openid')) {
+    const idToken = generateIdToken(
+      result.userId,
+      result.email,
+      result.emailVerified,
+      body.client_id,
+      rsaKeys,
+      app.config.JWT_ISSUER,
+      '1h' // ID tokens typically expire in 1 hour
+    )
+    response.id_token = idToken
+  }
+
+  return reply.status(200).send(response)
 }
 
 /**
@@ -227,11 +243,27 @@ async function handleRefreshTokenGrant(
     })
   }
 
-  return reply.status(200).send({
+  const response: any = {
     access_token: result.accessToken,
     token_type: 'Bearer',
     expires_in: result.expiresIn,
     refresh_token: result.refreshToken,
     scope: result.scopes.join(' ')
-  })
+  }
+
+  // Include ID token if openid scope is requested (OpenID Connect requirement)
+  if (result.scopes.includes('openid')) {
+    const idToken = generateIdToken(
+      result.userId,
+      result.email,
+      result.emailVerified,
+      body.client_id,
+      rsaKeys,
+      app.config.JWT_ISSUER,
+      '1h' // ID tokens typically expire in 1 hour
+    )
+    response.id_token = idToken
+  }
+
+  return reply.status(200).send(response)
 }

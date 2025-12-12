@@ -290,3 +290,70 @@ export function hasAnyScope(payload: JwtPayload, requiredScopes: string[]): bool
   const scopes = getTokenScopes(payload)
   return requiredScopes.some(scope => scopes.includes(scope))
 }
+
+/**
+ * OpenID Connect ID Token payload structure
+ */
+export interface IdTokenPayload {
+  sub: string           // User ID (subject) - REQUIRED
+  iss: string           // Issuer - REQUIRED
+  aud: string           // Audience (client_id) - REQUIRED
+  exp: number           // Expiration time - REQUIRED
+  iat: number           // Issued at - REQUIRED
+  auth_time?: number    // Authentication time (when user authenticated)
+  nonce?: string        // Nonce for replay protection
+  email?: string        // User email (if email scope requested)
+  email_verified?: boolean // Email verification status (if email scope requested)
+  name?: string         // User name (if profile scope requested)
+}
+
+/**
+ * Generate an OpenID Connect ID token
+ * @param userId - User ID (subject)
+ * @param email - User email
+ * @param emailVerified - Whether email is verified
+ * @param clientId - OAuth client ID (audience)
+ * @param rsaKeys - RSA key configuration
+ * @param issuer - Issuer URL
+ * @param expiresIn - Token expiration time (default: 1 hour for ID tokens)
+ * @param nonce - Optional nonce for replay protection
+ * @param authTime - Optional authentication time
+ * @returns Signed ID token JWT
+ */
+export function generateIdToken(
+  userId: string,
+  email: string,
+  emailVerified: boolean,
+  clientId: string,
+  rsaKeys: RsaKeyConfig,
+  issuer: string,
+  expiresIn: string | number = '1h',
+  nonce?: string,
+  authTime?: number
+): string {
+  const now = Math.floor(Date.now() / 1000)
+  
+  const payload: IdTokenPayload = {
+    sub: userId,
+    iss: issuer,
+    aud: clientId,
+    exp: now + (typeof expiresIn === 'number' ? expiresIn : parseExpiresIn(expiresIn as string)),
+    iat: now,
+    email,
+    email_verified: emailVerified
+  }
+
+  if (nonce) {
+    payload.nonce = nonce
+  }
+
+  if (authTime) {
+    payload.auth_time = authTime
+  }
+
+  return jwt.sign(payload, rsaKeys.privateKey, {
+    expiresIn: expiresIn as any,
+    algorithm: 'RS256',
+    keyid: rsaKeys.kid
+  } as SignOptions)
+}

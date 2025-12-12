@@ -52,6 +52,8 @@ export async function oauthMetadataRoute(app: FastifyInstance) {
             'client_secret_post',
             'client_secret_basic'
           ],
+          // OpenID Connect UserInfo endpoint (required when openid scope is supported)
+          userinfo_endpoint: `${issuer}/oauth/userinfo`,
           // Optional but useful
           registration_endpoint: `${issuer}/oauth/register`
         }
