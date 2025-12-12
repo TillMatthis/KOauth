@@ -77,7 +77,7 @@ export async function oauthMetadataRoute(app: FastifyInstance) {
   })
   
   // Handle OPTIONS preflight for CORS
-  app.options('/.well-known/oauth-authorization-server', async (request, reply) => {
+  app.options('/.well-known/oauth-authorization-server', async (_request, reply) => {
     reply.header('Access-Control-Allow-Origin', '*')
     reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
     reply.header('Access-Control-Allow-Headers', 'Content-Type')
@@ -133,7 +133,7 @@ export async function oauthProtectedResourceRoute(app: FastifyInstance) {
   })
   
   // Handle OPTIONS preflight for CORS
-  app.options('/.well-known/oauth-protected-resource', async (request, reply) => {
+  app.options('/.well-known/oauth-protected-resource', async (_request, reply) => {
     reply.header('Access-Control-Allow-Origin', '*')
     reply.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
     reply.header('Access-Control-Allow-Headers', 'Content-Type')
