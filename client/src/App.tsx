@@ -7,6 +7,9 @@ import { ForgotPassword } from './pages/ForgotPassword'
 import { Dashboard } from './pages/Dashboard'
 import { ApiKeys } from './pages/ApiKeys'
 import { OAuthConsent } from './pages/OAuthConsent'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { AdminUsers } from './pages/AdminUsers'
+import { AdminClients } from './pages/AdminClients'
 
 function App() {
   useEffect(() => {
@@ -32,6 +35,9 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/api-keys" element={<ApiKeys />} />
           <Route path="/oauth/consent" element={<OAuthConsent />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/clients" element={<AdminClients />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

@@ -113,6 +113,12 @@ export const envSchema = {
     CORS_ORIGIN: {
       type: 'string',
       default: '*'
+    },
+
+    // Admin
+    INITIAL_ADMIN_EMAIL: {
+      type: 'string',
+      default: ''
     }
   }
 }
@@ -143,6 +149,7 @@ declare module 'fastify' {
       EMAIL_FROM: string
       RESEND_API_KEY: string
       CORS_ORIGIN: string
+      INITIAL_ADMIN_EMAIL: string
     }
   }
 }

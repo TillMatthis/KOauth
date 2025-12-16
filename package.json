@@ -23,6 +23,7 @@
     "oauth:update-client": "tsx scripts/update-oauth-client.ts",
     "oauth:delete-client": "tsx scripts/delete-oauth-client.ts",
     "oauth:diagnose": "tsx scripts/diagnose-oauth-flow.ts",
+    "admin:setup": "tsx scripts/setup-initial-admin.ts",
     "docker:build": "docker build -t koauth .",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down"

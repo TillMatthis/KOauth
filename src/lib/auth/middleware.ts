@@ -17,6 +17,7 @@ declare module 'fastify' {
       id: string
       email: string
       sessionId?: string
+      isAdmin?: boolean
     }
   }
 }
@@ -168,4 +169,40 @@ export const getUser = requireUser
  */
 export function protectRoute() {
   return authenticate
+}
+
+/**
+ * Require admin access - checks authentication first, then verifies admin status
+ * Returns 403 if user is not admin
+ */
+export async function requireAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  // First ensure user is authenticated
+  await authenticate(request, reply)
+  
+  // Then check if user is admin
+  const user = getUser(request)
+  const { prisma } = await import('../prisma')
+  const dbUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isAdmin: true }
+  })
+  
+  if (!dbUser?.isAdmin) {
+    return reply.status(403).send({
+      success: false,
+      error: 'Admin access required'
+    })
+  }
+}
+
+/**
+ * Create a route protection middleware for admin routes
+ * Use this as a preHandler option in admin route definitions
+ * Example: app.get('/admin/users', { preHandler: protectAdminRoute() }, handler)
+ */
+export function protectAdminRoute() {
+  return requireAdmin
 }
