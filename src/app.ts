@@ -181,6 +181,28 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
     await registerOAuthApiRoutes(apiOAuthScope)
   }, { prefix: '/api/oauth' })
 
+  // Register /api/admin routes with stricter rate limiting
+  await app.register(async (adminScope) => {
+    // Stricter rate limit for admin endpoints
+    await adminScope.register(fastifyRateLimit, {
+      max: 20,
+      timeWindow: '1 minute',
+      cache: 10000,
+      keyGenerator: (request) => {
+        // Rate limit by user if authenticated, otherwise by IP
+        return request.user?.id || request.ip
+      },
+      errorResponseBuilder: () => ({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.'
+      })
+    })
+
+    const { registerAdminRoutes } = await import('./routes/api/admin')
+    await registerAdminRoutes(adminScope)
+  }, { prefix: '/api/admin' })
+
   // Register static UI plugin (after auth routes so API routes take precedence)
   const staticUI = await import('./plugins/static-ui')
   await app.register(staticUI.default)

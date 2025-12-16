@@ -41,6 +41,7 @@ export async function registerMeRoutes(app: FastifyInstance) {
             id: user.id,
             email: user.email,
             emailVerified: user.emailVerified,
+            isAdmin: user.isAdmin,
             createdAt: user.createdAt
           }
         })

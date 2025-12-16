@@ -6,6 +6,7 @@ interface User {
   id: string
   email: string
   emailVerified: boolean
+  isAdmin?: boolean
   createdAt: string
 }
 
@@ -111,6 +112,22 @@ export const Dashboard: React.FC = () => {
               <span className="text-blue-600 dark:text-blue-400">→</span>
             </div>
           </button>
+          {user.isAdmin && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="w-full px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors text-left"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-medium text-purple-900 dark:text-purple-100">Admin Panel</h3>
+                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                    Manage users and OAuth clients
+                  </p>
+                </div>
+                <span className="text-purple-600 dark:text-purple-400">→</span>
+              </div>
+            </button>
+          )}
         </div>
 
         <button

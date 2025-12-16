@@ -386,10 +386,96 @@ See [BUILD-CHECKLIST.md](./BUILD-CHECKLIST.md) for the complete development road
 - [x] Task 1.7 – Built-in Auth UI
 
 ### Phase 2 – Polish & Admin (Week 2)
-- [ ] Admin Dashboard
+- [x] Admin Dashboard
 - [ ] Email Service Integration
 - [ ] Production Deployment
 - [ ] Migration Support
+
+## Admin Dashboard
+
+KOauth includes a comprehensive admin dashboard for managing users and OAuth clients. The admin panel provides a web-based interface to replace CLI scripts for common administrative tasks.
+
+### Setting Up Your First Admin
+
+**Option 1: Environment Variable (Recommended)**
+
+1. Add the initial admin email to your `.env` file:
+   ```bash
+   INITIAL_ADMIN_EMAIL=your-email@example.com
+   ```
+
+2. Run the setup script:
+   ```bash
+   npm run admin:setup
+   ```
+
+   Or set the environment variable and the script will use it automatically.
+
+**Option 2: Manual Setup Script**
+
+Run the setup script with an email argument:
+```bash
+npm run admin:setup your-email@example.com
+```
+
+**Note:** The user account must exist first (signup/login) before you can grant admin access.
+
+### Accessing the Admin Panel
+
+1. **Log in** to your KOauth instance with an admin account
+2. **Navigate** to the dashboard (`/dashboard`)
+3. **Click** the "Admin Panel" button (visible only to admins)
+4. **Access** admin features:
+   - `/admin` - Dashboard with statistics
+   - `/admin/users` - User management
+   - `/admin/clients` - OAuth client management
+
+### Admin Features
+
+**User Management:**
+- View all users with pagination and search
+- View user details (sessions, API keys count)
+- Toggle email verification status
+- Grant/revoke admin privileges
+- Delete users (with safety checks)
+
+**OAuth Client Management:**
+- List all OAuth clients with statistics
+- Create new OAuth clients
+- Edit client configuration (redirect URIs, trusted status, etc.)
+- Regenerate client secrets
+- Delete clients
+
+**Dashboard Statistics:**
+- Total users count
+- Total OAuth clients
+- Active sessions
+- Recent signups
+- User growth metrics
+
+### Security Features
+
+- **Admin Route Protection**: All `/api/admin/*` routes require admin authentication
+- **Self-Protection**: Admins cannot remove their own admin status
+- **Last Admin Protection**: The last admin cannot be demoted or deleted
+- **Rate Limiting**: Stricter rate limits on admin endpoints (20 req/min)
+- **Secret Management**: Client secrets shown only once on creation/regeneration
+
+### Admin API Endpoints
+
+All admin endpoints are under `/api/admin/*` and require admin authentication:
+
+- `GET /api/admin/stats` - Dashboard statistics
+- `GET /api/admin/users` - List users (with pagination and search)
+- `GET /api/admin/users/:id` - Get user details
+- `PATCH /api/admin/users/:id` - Update user
+- `DELETE /api/admin/users/:id` - Delete user
+- `GET /api/admin/clients` - List OAuth clients
+- `GET /api/admin/clients/:clientId` - Get client details
+- `POST /api/admin/clients` - Create OAuth client
+- `PATCH /api/admin/clients/:clientId` - Update client
+- `DELETE /api/admin/clients/:clientId` - Delete client
+- `POST /api/admin/clients/:clientId/regenerate-secret` - Regenerate client secret
 
 ## License
 
