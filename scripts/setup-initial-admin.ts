@@ -5,7 +5,9 @@
  * Or set INITIAL_ADMIN_EMAIL in .env and run on server startup
  */
 
-import { prisma } from '../dist/lib/prisma.js'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 async function setupInitialAdmin(email?: string) {
   try {
