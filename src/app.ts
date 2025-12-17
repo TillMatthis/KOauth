@@ -54,6 +54,10 @@ export async function buildApp(opts = {}): Promise<FastifyInstance> {
   // Store RSA keys in app context for use in routes
   ;(app as any).rsaKeys = rsaKeys
 
+  // Initialize email service
+  const { initEmailService } = await import('./lib/email')
+  initEmailService(app)
+
   // Parse audience list from config
   const audienceList = app.config.JWT_AUDIENCE
     ? app.config.JWT_AUDIENCE.split(',').map(s => s.trim())

@@ -9,6 +9,8 @@ import { hashPassword } from '../../lib/auth/password'
 import { createSession, SESSION_COOKIE_NAME, REFRESH_COOKIE_NAME } from '../../lib/auth/session'
 import { signupSchema } from '../../lib/auth/validation'
 import { ConflictError, ValidationError } from '../../lib/auth/errors'
+import { createMagicLinkToken } from '../../lib/auth/magic-link'
+import { sendEmailVerification } from '../../lib/email'
 import { z } from 'zod'
 
 interface SignupBody {
@@ -49,6 +51,20 @@ export async function signupRoute(app: FastifyInstance) {
       })
 
       logger.info({ userId: user.id, email }, 'User created successfully')
+
+      // Send verification email (non-blocking - don't fail signup if email fails)
+      try {
+        const token = await createMagicLinkToken(user.id, 'email_verification')
+        const emailSent = await sendEmailVerification(app, email, token)
+        if (emailSent) {
+          logger.info({ userId: user.id, email }, 'Verification email sent')
+        } else {
+          logger.warn({ userId: user.id, email }, 'Failed to send verification email (signup still successful)')
+        }
+      } catch (emailError) {
+        // Log but don't fail signup if email fails
+        logger.error({ error: emailError, userId: user.id, email }, 'Error sending verification email (signup still successful)')
+      }
 
       // Create session
       const ipAddress = request.ip

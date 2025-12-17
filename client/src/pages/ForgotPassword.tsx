@@ -1,17 +1,43 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo } from '../components/Logo'
+import { ErrorAlert } from '../components/ErrorAlert'
 
 export const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('')
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    setIsLoading(true)
 
-    // TODO: Phase 2 - Implement magic link email
-    // For now, just show a success message
-    setIsSubmitted(true)
+    try {
+      const response = await fetch('/api/auth/reset-password/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+        credentials: 'include',
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send reset email')
+        setIsLoading(false)
+        return
+      }
+
+      // Success - show success message
+      setIsSubmitted(true)
+    } catch (err) {
+      setError('Network error. Please try again.')
+      setIsLoading(false)
+    }
   }
 
   if (isSubmitted) {
@@ -31,14 +57,14 @@ export const ForgotPassword: React.FC = () => {
             If an account exists for <strong>{email}</strong>, we've sent a password reset link.
           </p>
 
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
-            <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              <strong>Note:</strong> Password reset via email is coming in Phase 2. For now, please contact your administrator or use OAuth to sign in.
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              The reset link will expire in 1 hour. If you don't see the email, check your spam folder.
             </p>
           </div>
 
           <Link
-            to="/auth"
+            to="/"
             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,11 +87,7 @@ export const ForgotPassword: React.FC = () => {
           Enter your email and we'll send you a reset link
         </p>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Phase 2 Preview:</strong> Magic link password reset will be available soon. This is a preview of the UI.
-          </p>
-        </div>
+        <ErrorAlert message={error} onClose={() => setError('')} />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -85,13 +107,13 @@ export const ForgotPassword: React.FC = () => {
             />
           </div>
 
-          <button type="submit" className="btn-primary">
-            Send reset link
+          <button type="submit" disabled={isLoading} className="btn-primary">
+            {isLoading ? 'Sending...' : 'Send reset link'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          <Link to="/auth" className="link-text">
+          <Link to="/" className="link-text">
             Back to sign in
           </Link>
         </p>
