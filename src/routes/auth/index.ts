@@ -11,6 +11,8 @@ import { refreshRoute } from './refresh'
 import { logoutRoute } from './logout'
 import { googleAuthRoute, googleCallbackRoute } from './google'
 import { githubAuthRoute, githubCallbackRoute } from './github'
+import { verifyEmailRoute } from './verify-email'
+import { resetPasswordRoute } from './reset-password'
 
 /**
  * Register all auth routes
@@ -28,4 +30,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   await googleCallbackRoute(app)
   await githubAuthRoute(app)
   await githubCallbackRoute(app)
+
+  // Email verification and password reset routes (Phase 2)
+  await app.register(verifyEmailRoute, { prefix: '/verify-email' })
+  await app.register(resetPasswordRoute, { prefix: '/reset-password' })
 }
